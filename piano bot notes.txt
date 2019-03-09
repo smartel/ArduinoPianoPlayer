@@ -60,8 +60,17 @@ We'll want to figure out what is "humanly possible" (machine-ly possible?) for t
 Will there be room for a note to be hit simultaneously with its flat / sharp?
 Best way to determine and store "duration" ? Since we need to worry about bpm / time signatures
 	We may want to store the unadultered duration in a note object itself, and then the adjusted duration (if we need it to lift off the key 0.05 seconds early or something) in an "instruction" object
+	Ok, so, we can determine how long a beat is, or a measure is, on a song-per-song basis, by looking at their bpm?
+		So we read in a song, we see idk 80 bpm, determine a beat is (lets pretend) 1 second, we store that 1 second, and pull it whenever we need to know how long a quarter note / half note / whole note etc is
+			And we'll store it in seconds or milliseconds, so like, perhaps we'll determine and store it as 950ms
 
 Do we want to make our own "Finger Reducer" in the Transposer? Like, have it try to calculate the fewest fingers you'd need to do the song?
+	While not my proudest idea, we could use the "problem solver framework" from years and years ago to effectively try to brute-force find solutions using the least number of fingers.
+		That is, if we have a solution that uses 6 fingers, you could then run the brute-force using 5 and see if it returns anything, and then using 4, and so on, til it can't find a solution.
+			ONE OF THE EASIEST CHECKS YOU CAN DO IS "What is the maximum number of keys that are hit simultaneously in this song?" to find out AT LEAST how many fingers you'll need.
+Do we want to analyze songs and find their local min / maxes? I mean, find the lowest key that is ever hit, find their highest, find which keys are hit most often, and strategically place fingers,
+	at least at the very start of the song? May be worth it to have an "analyzer" class that just figures out these hot-spots.
+	
 
 Should we have a log, so we can output warnings / errors? Such as if a certain key can't be reached on the given piano specifications, or number of simultaneous notes exceeds number of fingers, so on.
 	If we're only talking about the transposer and my test gui, standard out would be good enough rather than implementing log4j or something. It's not like this is some 24/7 server in a production environment running while im not present.
@@ -89,3 +98,14 @@ TBD: Early development GUI that will show the expected behavior of the Live Play
 	Short term (ie, before we move the player to the arduino), we're going to make a basic gui in java that shows the position of fingers on a keyboard, with a log for when fingers move, maybe itll play live, idk
 	It'll exist to help development and testing / debugging of the actual transposer and player.
 	FEIGNER FOX?
+	
+	
+	
+Program terminology:
+MusicNote - an individual note from a song / sheet music / what have you. Contains at least the note, octave, and duration.
+MusicSlice - A collection of all MusicNotes that need to be struck at one very specific period of time
+MusicSheet - a collection of slices (thus, ultimately a collectino of all music notes and when they need to be hit)
+FingerAssigner - this knows the positions of all the fingers, and processes a music sheet, assigning instructions to fingers.
+FingerInstruction - an individual "message" telling a single finger to move to a given note and to press it for a given duration
+
+

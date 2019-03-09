@@ -1,15 +1,15 @@
 package DataObjs;
 
 import Utils.Constants;
+import Utils.NoteUtils;
 
 /**
  * A MusicNote refers to a specific individual musical note within a specific octave with a specific duration.
+ * 
  * @author smartel
- *
  */
 public class MusicNote {
 
-	// TODO may as well implement 'comparable' and use the compareValue for it?
 	// TODO it's not really worth it to have an enum for WHOLE-STEP (or something?), SHARP, FLAT, is it? Or a ternary :^)
 
 	/**
@@ -36,7 +36,7 @@ public class MusicNote {
 	 * A simple double for comparing piano keys relative to each other. See NoteUtils#generateCompareValue for a full explanation.
 	 * Quick synopsis - white notes count for full steps (1), a sharp adds 0.5, and a flat subtracts 0.5.
 	 */
-	private int compareValue;
+	private double compareValue;
 	
 	/**
 	 * TBD: will depend on bpm / time signature / etc. May need to exclude notes smaller than a certain size, such as 1/8th notes.
@@ -49,17 +49,17 @@ public class MusicNote {
 	 * If for any reason the note can't be created (such as both the sharp and flat flags being set to true), then an error will be logged and an exception thrown.
 	 * @param note The specific note (A,B,C,D,E,F,G) to hit (ignoring half-steps)
 	 * @param octave The octave the note is in (1-x)
-	 * @param isSharp if true, the note is treated as a sharp
-	 * @param isFlat if false, the note is treated as a flat
+	 * @param isSharp a flag indicating whether the note is a sharp. if true, the note is treated as a sharp
+	 * @param isFlat a flag indicating whether the note is a flat. if false, the note is treated as a flat
 	 */
 	public MusicNote(String note, int octave, boolean isSharp, boolean isFlat) {
 		initializeNote(note, octave, isSharp, isFlat);
 	}
 	
 	/**
-	 * Overloaded constructor asssumes the note is neither flat nor sharp
-	 * @param note
-	 * @param octave
+	 * Overloaded constructor that assumes the note is neither sharp nor flat
+	 * @param note The specific note (A,B,C,D,E,F,G) to hit (ignoring half-steps)
+	 * @param octave The octave the note is in (1-x)
 	 */
 	public MusicNote(String note, int octave) {
 		initializeNote(note, octave, false, false);
@@ -67,7 +67,10 @@ public class MusicNote {
 	
 	/**
 	 * Attempts to initialize the note with the given parameters. If it fails, an error is logged and an exception thrown
-	 * @return
+	 * @param note The specific note (A,B,C,D,E,F,G) to hit (ignoring half-steps)
+	 * @param octave The octave the note is in (1-x)
+	 * @param isSharp a flag indicating whether the note is a sharp. if true, the note is treated as a sharp
+	 * @param isFlat a flag indicating whether the note is a flat. if false, the note is treated as a flat
 	 */
 	public void initializeNote(String note, int octave, boolean isSharp, boolean isFlat) {
 		this.note = note;
@@ -75,30 +78,62 @@ public class MusicNote {
 		this.isSharp = isSharp;
 		this.isFlat = isFlat;
 		
+		// Ensure the note is not marked as both sharp AND flat
 		if (isSharp && isFlat) {
-			// TODO log error message
-			// TODO abort (throw exception?) - unless we want to just keep one value instead, like, force it to be sharp? then log that change and dont abort? and update comments.
+			System.out.println("MusicNote#initializeNote - failed to initialize - isSharp and isFlat both set to true.\r\nConfirmation - isSharp: " + isSharp + ", isFlat: " + isFlat);
+			// TODO abort / throw exception?
 		}
 		
+		// Ensure the note is a valid piano key
 		if (note != Constants.A_NOTE &&
 			note != Constants.B_NOTE &&
 			note != Constants.C_NOTE &&
 			note != Constants.D_NOTE &&
 			note != Constants.E_NOTE &&
 			note != Constants.F_NOTE &&
-			note != Constants.G_NOTE) {		
-			// TODO the note is not recognized (not A through G), so log an error and throw an exception
+			note != Constants.G_NOTE) {
+			System.out.println("MusicNote#initializeNote - failed to initialize - unrecognized note value passed in.\r\nnote: " + note);
+			// TODO abort / throw exception?
+			
 		}
 		
-		if (octave <= 0) { // || octave >= ?? We can put a "max octave" final in Constants.java if necessary
-			// TODO if the octave is not valid (0, negative, perhaps some maximum value like 9?), log error and throw exception.
+		// Ensure the note is a non-zero / non-negative octave
+		if (octave <= 0) {
+			System.out.println("MusicNote#initializeNote - failed to initialize - invalid octave value (0 or negative).\r\noctave: " + octave);
+			// TODO abort / throw exception?
 		}
+		// TODO Ensure the note exists on the piano (is not out-of-bounds) by checking the piano's properties (this will catch if the octave value is too high, for example).
+		//      Additionally, it will also check if the note is so far to the left that it doesn't exist on the piano,
+		//      because a piano may not reach all the way down to A on its first octave. Mine starts on note E on its first octave, so a 1st octave A,B,C, or D would be out of range.
 		
-		// TODO should we check the properties of the piano here to see if the note is valid / a note within the bounds of the specific piano?
 		
-		// TODO duration error checking (if the duration is smaller than 0, perhaps smaller than 1/8th note (still TBD on how we're doing duration))
-		
-		// TODO call NoteUtils#generateCompareValue
-		//compareValue = ;
+		// Ensure the note is a non-zero / non-negative duration
+		if (duration <= 0) {
+			System.out.println("MusicNote#initializeNote - failed to initialize - invalid duration value (0 or negative).\r\nduration: " + duration);
+			// TODO abort / throw exception?
+		}		
+		// TODO additionally, do we want to check if the duration value is too small for our piano player to handle? Such as 1/8th notes, 1/16th, 1/32nd, so on?
+		//      Not sure what will be "humanly-possible" for our technology yet. Presumably the smallest duration we can handle is something we can put in Properties and compare against.
+
+
+		compareValue = NoteUtils.generateCompareValue(note, octave, isSharp, isFlat);
+	}
+	
+	/**
+	 * Overridden compareTo that performs a Double compareTo using the MusicNotes' compareValue field.
+	 * @return Double.compare result using the two objects' compareValue fields
+	 */
+	public int compareTo(MusicNote other) {
+		return Double.compare(compareValue, other.compareValue);
+	}
+	
+	/**
+	 * Overridden toString that returns the details for this MusicNote object
+	 * @return a string containing all the fields and values for this MusicNote
+	 */
+	public String toString() {
+		String details;
+		details = "CompareValue: " + compareValue + " | Duration: " + duration + " | Note: " + note + ", Octave: " + octave + " | isSharp: " + isSharp + ", isFlat: " + isFlat;
+		return details;
 	}
 }

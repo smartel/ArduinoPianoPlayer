@@ -26,9 +26,13 @@ public class NoteUtils {
 	 * 	 A-flat on octave 3 = 1(for A) - 0.5(for flat) + ((3-1)*7) = 0.5 + 14 = 14.5
 	 *   G-sharp on octave 2 = 7(for G) + 0.5(for sharp) + ((2-1)*7) = 7.5 + 7 = 14.5
 	 */
-	public double generateCompareValue(String note, int octave, boolean isSharp, boolean isFlat) {
+	public static double generateCompareValue(String note, int octave, boolean isSharp, boolean isFlat) {
 
 		double value = 0;
+		
+		// Note: there is some mild duplicated error checking in here, but within reason - NoteUtils only cares about ensuring it is creating a valid compareValue.
+		// Thus, it will ensure the octave is not non-zero / non-negative, much like the MusicNote's initializer should've already checked. HOWEVER, it will not check if the note exists
+		// on your piano itself - its only responsibility is creating a valid compareValue, regardless of whether it exists on your piano.
 
 		// individual note lookup
 		
@@ -46,21 +50,31 @@ public class NoteUtils {
 			value += Constants.F_POS;
 		} else if (note == Constants.G_NOTE) {
 			value += Constants.G_POS;
+		} else {
+			System.out.println("NoteUtils#generateCompareValue - failed to initialize - unrecognized note value passed in.\r\nnote: " + note);
+			// TODO abort / throw exception? short term, returning -1
+			return -1;
 		}
 		
 		// note modifications via half-steps
 		
-		if (isSharp) {
+		if (isSharp && isFlat) {
+			System.out.println("NoteUtils#generateCompareValue - failed to initialize - isSharp and isFlat both set to true.\r\nConfirmation - isSharp: " + isSharp + ", isFlat: " + isFlat);
+			// TODO abort / throw exception? short term, returning -1
+			return -1;
+		} else if (isSharp) {
 			value += Constants.SHARP_CHANGE;
 		} else if (isFlat) {
-			value += Constants.FLAT_CHANGE;
+			value += Constants.FLAT_CHANGE; // adding a negative to the value to reduce it
 		}
 		
-		// octave adjustment
+		// octave adjustment - only needs to confirm the octave is non-zero / non-negative. it can accurately create a compareValue for an octave no matter how high it is.
+		if (octave <= 0) {
+			System.out.println("NoteUtils#generateCompareValue - failed to initialize - invalid octave value (0 or negative).\r\noctave: " + octave);
+			// TODO abort / throw exception? short term, returning -1
+			return -1;
+		}
 		value += ((octave - 1) * Constants.OCTAVE_LENGTH);
-		
-		// TODO all error handling should've been done in the MusicNote constructor, and I'm not sure anything else would call this method...
-		// but should we do any error checking here just to be safe? Perhaps move that error checking / exception throwing here instead, so it's not duplicated in 2 places?
 		
 		return value;
 	}
