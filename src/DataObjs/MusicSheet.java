@@ -1,5 +1,7 @@
 package DataObjs;
 
+import java.util.LinkedList;
+
 /**
  * MusicSheet.java
  * 
@@ -23,8 +25,22 @@ package DataObjs;
  */
 public class MusicSheet {
 	
+	public MusicSheet() {
+		LinkedList<MusicSlice> slices = new LinkedList<MusicSlice>();
+	}
 	
-	
+	// TODO
+	// implement a way to process our alchemized music data file format
+	public boolean processAlcFile(String filePath) {
+		boolean isSuccessful = false;
+
+		// TODO implement
+		// TODO confirm it is an alchemized music data file - check the header line of the file, as well as the file extension.
+		//      if it isn't, we can abort and return false
+		// TODO insert entries into slices collection by processing the file
+		
+		return isSuccessful;
+	}
 	
 	
 }

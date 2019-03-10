@@ -1,111 +1,142 @@
-Tentative piano bot ideas, not really organized yet.
+Arduino Piano Player overview:
 
-We'll have at least 2 programs:
-	1 program creates the raw file we send to the player - so instead of reading the song live, we have it mapped out, which robotic finger to what note for what duration, so we dont have fingers attempting to cross each other / collide trying to hit the same note simultaneously
-		will also makes chords possible
-	The other program is the player, that causes the arduino to physically play the piano.
+
+
+
+The end goal is to have an arduino, with robotic fingers that slide along a track, be able to quickly process and play a piece of music from potentially many different standard formats 
+	(such as an unedited MusicXML file, reminiscent of sheet music), on a physical keyboard or piano.
+	Ideally, it will be able to play music I'm not personally capable of playing.
+
+
+
 	
-How many fingers will the physical hardware have? 3?
-	humans have ten.
-	if you want it to play "better than you", youre gonna need to be able to handle chords and possibly up to 7 notes at a time? idk. many notes.
-		When I say "better than me", I mean, it can play a new song immediately that I'd need a week or more on. It doesn't need to be able to do obscene speeds or massive chords, but play any song quickly and adequately.
-			And that alone will make it far superior to me.
-	We may need to try and implement a few different finger-controlling styles, like always alternating between fingers with keys
-		Like, if we have 3 fingers, have it map out so you typically alternative between left and middle / left and right, when applicable? So one finger isn't constantly moving all across the board while 2 fingers sit doing nothing at one end. And to try to head off a potential collission, alternate between the middle and the side-most (whether left or right)
-		
-keep in mind there is a physical gap between keys, likje, you may need to stop playing a note 0.15 seconds early to make it to the next note.
-	theres probably a constant amount of time, to retract the finger from one key and push the finger down on another, lets say .1 seconds. and then maybe another 0.05 we multiply times the note gap, like 3 notes away, 5 notes, and so on.
-		So Constant time + (Gap distance * Time to travel past a single note) = Final time to subtract from playing a note?
-		Note that retracting from / pushing down on flats / sharps may be a very miniscule difference from white notes, so that may also affect the timing if youre coming from / going to a sharp/flat.
-			IF THE SONG HAS ENOUGH FINGERS TO NOTES RATIO, WE WONT NEED TO HAVE A GAP? CAUSE ONE FINGER CAN HOLD AND LET GO AFTER THE FULL DURATION WHILE ANOTHER FINGER PUSHES THE NEXT NOTE
-			We may need to play this by ear some, like, if the gap is .1 seconds, maybe we stop playing a note 0.05 seconds early and play the next one 0.05 late? that might soudn too off though, so bailing .1 early could be better?
-				we'll experiment.
-				
-For your own sake, you probably want to be able to read from a standard music file convention
-	We can start off with our own for early testing and even for the playable file we'll output, but itll make it so you dont need to hardcode everything, if you can just read a .mus or whatever and convert that to your format
-		What do we need in our playable file?
+High-level overview of the process:
+
+Multiple different steps will take us from having a source file in some standard format (such as MusicXML), and end up with the arduino playing the music on a physical piano.
+A program that translates from potentially multiple different standard formats (like musicxml) into my own custom format (an .alc file, Alchemized Music Data File)
+A program that processes my format, and turns it into another proprietary format, "finger instructions" (a ".fng", finger file) - commands that are sent to the arduino, telling it how to move its "fingers" and for how long, to play the music piece.
+	The finger instructions may potentially end up being code written by code - possibly exporting raw arduino commands that are just run directly, meaning no "player program" may actually exist outside of the exported code.
+	This exported code will need to be based on the individual piano's properties (how many keys / octaves it has) as well as how many fingers are available for the arduino to instruct.
+
+To further clarify - a song will not be played live just by importing an xml file. Chords and "finger" movements will need to be mapped out, so this will be at least a 2 step process:
+	1. import standard file (or my .alc file format)
+	2. export raw arduino code to physical device (instructions are exported in my .fng file format)
+	
+Additional utilities, such as a "Song stats analyzer" (name TBD), may be developed to determine local maximums / keys that are hit most often in a song,
+	as well as the lowest tone hit, highest tone hit, and so on, so we can optimize "finger" placement for individual songs.
+
+	
+
+	
+Technical information:
+
+The yamaha dgx205 keyboard I am intending to try the arduino piano player on contains 45 white keys and 31 black keys, for a total of 76 keys. Its first key is an E. Its last key is a G.
+
+Alchemized music data file implementation:
+	Header line, which will be checked to confirm it is an .alc file, as well as containing some basic information like song name (TBD)
+Tentative: my music file format will, at a minimum, need to know for each note:
+		TIMESTAMP IN SONG (likely in milliseconds):
 		NOTE:
 		OCTAVE: (include this in the note itself?)
 		WHETHER IT IS FLAT OR SHARP:
-		FINGER:
 		NOTE DURATION: (note, some amount may be subtracted from this, so if it was 1 second, it may be 0.9 so it can have time to get to the next note)
 						we may also need to store bpm, whether it is a quarter note, half note, whole note, and so on?
 							and we may have to reject notes that are too small, like 1/8th, 1/16th, 1/32th ... notes.
-	Anything extra? Like current Note / Octave it is on, so we can have the calculated distance visible in this object too?
-		Well, a straight up "music note" as written in sheet music wouldnt have the "current values" (referring to the previous note), just the "values for this specific note"
-			An instruction object / instruction planner is what would need to calculate those.
-				
-Your yamaha piano has these keys:
-45 white
-31 black
-76 total keys
----
-What octave does it officially start on? Couldnt there be one more to the left and or right of yours?
-	Do we care if there potentially could be? For the sake of our program, the fartest key on the left would be the first octave.
-		Wait oh my god what key does it start on?
-			E. The first key on my keyboard is E.
-				WE WILL NEED TO INITIALIZE THEN. PROPERTIES FILE WILL STORE THE FIRST KEY ON THE PIANO (so it would be an octave 1, E)
-^We'll want a properties file somewhere, that specifies what octave the piano starts on, how many octaves / how many keys it is
-Unrelated to the piano's first key location, do we want to have an >initial finger(s) start location(s) value or something? Like, always have finger 1 start on C in octave 3?
-	And every extra finger is the immediate key to its right?
-		Alternatively, have the finger(s) go as far left or right as possible on the track when the program starts up, so the program knows the fingers start on keys (First key),(Second key), ... for n fingers
-		So then we dont really need to set any init values in the properties, right? Since it would all be based on the "first key on the first octave on the piano" value, so octave 1 "E" in my case.
+When processed, instructions will be assigned to these notes and given a specific finger to hit it.
+The instructions can then be reduced to specific commands for each finger, for example:
+Finger 1: wait x milliseconds, slide y direction for z time, depress white/black key for duration, retract finger, wait a, slide b direction for c time, depress white/black key for duration, ...
+Finger 2: "" with different waits, durations, slide time, and so on.
+Finger n: ""
+Presumably all of these instructions will need to be merged into one linear instruction file / order of operations.
+While my file format will have unedited durations, the durations may need to be shrunk slightly in the actual finger instructions, to account for time it takes to retract/depress keys and slide.
+	See: unanswered questions section.
 
-Potential implementation issues:
-Don't drop holds / duration early on a finger when a new instruction is read - we need to "block" somehow / signal that the finger is busy and can't move to a new note yet.
-different hold durations and trying to swap hitting notes with different fingers? If you only have 2 fingers, and one note is holding for 4 seconds, and the other is trying to hit notes to the left and right of the holding note every 1 second, then you're stuck :^)
+	
+	
+	
+Project name: PianoPlayer
+Project terminology:
+
+Translate - converting from one standard file format (such as MusicXML) to my file format (.alc, Alchemized Music Data File)
+Transpose - converting from my file format (.alc) to the raw instructions (.fng file) sent to the arduino to play the piano
+
+Lost Time - not sure if this will be a real issue yet. But if a finger has to stop depressing a note early, to move to its next note to hit (say, .10 seconds early),
+	        we'll consider that .10 seconds of "lost (play)time"
+
+.alc file format - My alchemized music data file, which is how my program processes music note information. This exists so I only need to process one format.
+	"Translators" will exist to convert other standard formats (like MusicXML) into my format
+.fng file format - My "finger instruction" file, that contains the commands to be sent to the arduino to play the music piece.
+	
+TRANSPOSER:
+	MusicNote - an individual note from a song / sheet music / what have you. Contains at least the note, octave, and duration.
+	MusicSlice - A collection of all MusicNotes that need to be struck at one very specific period of time
+	MusicSheet - a collection of slices (thus, ultimately a collection of all music notes in the song and when they need to be hit)
+	FingerAssigner - this knows the positions of all the fingers, and processes a music sheet, assigning instructions to fingers.
+	FingerInstruction - an individual "message" telling a single finger to move to a given note and to press it for a given duration
+FEIGNER:
+	A short term basic java gui that shows the position of fingers on a keyboard, and attempts to replicate how the arduino will move fingers and play a song given an .fng file.
+RASPBERRY FOX:
+	The name of my physical piano-playing arduino.
+	
+	
+	
+
+Remaining questions:
+	
+How many fingers will the physical hardware have?
+	Keeping in mind humans only have ten fingers, albeit some advanced chords call for moves like having the thumb depress 2 notes at the same time.
+	To have a decent range, we probably want to consider having at least 3 fingers for the arduino's "left hand" and 3 for its "right hand", meaning 6 total at a minimum.
+
+Do we need fingers to let go of their key slightly early, to quickly move to the next key it needs to hit?
+For example: given there is only ONE FINGER in this example (or, highly situational - no other fingers will be able to reach the key in time due to their positions / being blocked by other fingers),
+	         and the one finger is hitting an arbitrary key (let's say a quarter note), and then needs to move and hit an adjacent note next to it (another quarter note).
+			 Do we need to plan for the time it will take to stop hitting its current note, and move to the next note, into its instructions?
+			 For example, maybe it will take 0.05 seconds to retract a key, and a baseline 0.10 seconds to slide over to an adjacent key
+				(plus an additional let's say ~0.5 seconds per additional key it needs to slide pass)
+			 WHAT WOULD THE SOLUTION BE: do we want to stop depressing its current note ~0.15 seconds early,
+										 do we cut the difference in half between the two notes? (undepress 0.075 early and depress the correct note 0.075 late).
+			 We'll likely need to play this by ear to figure out what sounds best. Ideally with enough fingers it won't be an issue.
+If nothing else, we should be able to document constants, such as:
+	how long it takes to retract a key press before it can safely slide to a new note,
+	how long it takes baseline to slide across the physical gap to an adjacent note,
+	how long it will take to slide for each additional note (presumably the same amount of time as just sliding to an adjacent note, multiplied?),
+	how long it will take to depress the new note,
+	how long it takes to hit a sharp / flat note versus a white note (if it takes a different amount of time to depress or retract these keys)
+This may end up being: Retract time + Depress time + (Gap distance in notes * Time to travel past an individual note) +/- sharp or flat modification =
+	Final time to subtract from playing a note or split across the previous and next note?
+Optimal solutions should aim to have as few fingers as possible utilized, WHILE ALSO HAVING AS LITTLE "LOST TIME" AS POSSIBLE (ie, if you lift off a note .10 seconds early, that will be 0.10 seconds "lost time")
+
+How do we want to initial finger placement before a song starts / at the start of a song?
+	Do we have all fingers move as far to the left as possible before a song starts or after a song ends?
+		This way, we'll always know their position, as in, the first finger is on the first key, the second finger is on the second key, and so on.
+	Do we want to take a few seconds to "initialize" before starting to play the song, where the fingers move from their starting positions to the first notes each will need to hit,
+		but wait until they are all stationed before starting to play the song?
+			There could be more fingers than keys that need to be hit at any given time, so do we want to strategically map out local maximums / which keys are hit most often, to position fingers there?
+
+While collissions are not intended, it may be best to test what would happen if we had two fingers try to cross past each other,
+	as well as how gracefully two fingers can be next to each other / hit directly adjacent notes.
+	We need to know early on if we need to account for a gap between fingers, which would be terrible.
+	So realistically, we need to know if we need to make "skinnier" fingers, or some sort of alternating physical shape that allows fingers to directly neighbor with each other safely.
+		Will there be room for a note to be hit simultaneously with its flat / sharp? That might be too close. How common is that in actual songs? Would that be dissonant?
+			Doesn't matter if it's dissonant, if it is what is in the actual unedited MusicXML. Either find a way to play it or list it as a limitation.
+
+Do we want to make our own "Finger Reducer" in the Transposer? Like, have it try to calculate the fewest fingers you'd need to do the song?
+	While not my proudest idea, we could use the "problem solver framework" from years and years ago to effectively try to brute-force find solutions using the least number of fingers.
+		That is, if we have a solution that uses 6 fingers, you could then run the brute-force using 5 and see if it returns anything, and then using 4, and so on, til it can't find a solution.
+			ONE OF THE EASIEST CHECKS YOU CAN DO IS "What is the maximum number of keys that are hit simultaneously in this song?" to find out AT LEAST how many fingers you'll need.
+	
 We'll want to figure out what is "humanly possible" (machine-ly possible?) for the arduino to handle, ie, how fast can it hit notes / arpeggios / "do hammer ons", how fast can it move across octaves, and so on.
 	Should first start by learning how much is possible / what are the constraints on a single "finger", before adding more fingers.
 	Do we care how softly / hard it can hit notes? Not out of physical worry for the keyboard (although we shouldn't intentionally be rough), but to create softer / harder sounds? Or we can just turn the "touch" option off on my yamaha.
-Will there be room for a note to be hit simultaneously with its flat / sharp?
+
 Best way to determine and store "duration" ? Since we need to worry about bpm / time signatures
 	We may want to store the unadultered duration in a note object itself, and then the adjusted duration (if we need it to lift off the key 0.05 seconds early or something) in an "instruction" object
 	Ok, so, we can determine how long a beat is, or a measure is, on a song-per-song basis, by looking at their bpm?
 		So we read in a song, we see idk 80 bpm, determine a beat is (lets pretend) 1 second, we store that 1 second, and pull it whenever we need to know how long a quarter note / half note / whole note etc is
 			And we'll store it in seconds or milliseconds, so like, perhaps we'll determine and store it as 950ms
 
-Do we want to make our own "Finger Reducer" in the Transposer? Like, have it try to calculate the fewest fingers you'd need to do the song?
-	While not my proudest idea, we could use the "problem solver framework" from years and years ago to effectively try to brute-force find solutions using the least number of fingers.
-		That is, if we have a solution that uses 6 fingers, you could then run the brute-force using 5 and see if it returns anything, and then using 4, and so on, til it can't find a solution.
-			ONE OF THE EASIEST CHECKS YOU CAN DO IS "What is the maximum number of keys that are hit simultaneously in this song?" to find out AT LEAST how many fingers you'll need.
-Do we want to analyze songs and find their local min / maxes? I mean, find the lowest key that is ever hit, find their highest, find which keys are hit most often, and strategically place fingers,
-	at least at the very start of the song? May be worth it to have an "analyzer" class that just figures out these hot-spots.
-	
 
-Should we have a log, so we can output warnings / errors? Such as if a certain key can't be reached on the given piano specifications, or number of simultaneous notes exceeds number of fingers, so on.
-	If we're only talking about the transposer and my test gui, standard out would be good enough rather than implementing log4j or something. It's not like this is some 24/7 server in a production environment running while im not present.
-	Now, if something happens and the arduino freaks out? :^) But that part wont be written in java anyway.
-	
-Name, stickers on the physical player?
-	Raspberry Fox? Sort of a pun on Raspberry Pi, but its your favorite module for vocaloid Kagamine Rin, which is mildly related to piano / music
-	Brainstorming: 39 or Miku related? Stepping away from vocaloid... In honor of Sarnys? Or maybe something bard related?
-	Or if you want maximum ego: Porviano/Porvano/Pianorv or something? Porvly-played ? - pun on "poorly played" but we want it to surpass me :^)
-
-If we go all-in on fox:
-	Flip Fox - Note Transposer program that reads music notes in some standard format and converts them to my format
-	Functional Fox - Piano-playing program that reads the notes in my format, telling which robotic fingers to move where and when, and thus plays the actual piano in real life, running from my arduino
-	Feigner Fox - Early development gui that reads the notes in my format and shows the expected behavior on a (non-real / non-physical) virtual piano
-	
-PROGRAM NAMES:
-Project: PianoPlayer (figure its easier to read than RaspberryFox)
-TBD: Note Transposer (very bland) - Make it your own somehow, like the Lexiconifier? Transposifier? Transpianser? Notepose(r)? Transnote(r/s)? Stick with the fox theme ie Transpose Fox?
-	This is the program that will take in some form of sheet music, and convert it to our format, presumably at a minimum: note (including octave), finger to move to it, and duration to hold it
-	TRANSPOSER FOX? FLIP FOX?
-TBD: Live Player / Note Player (very bland) - Fingerposer, so we'd have the Transposer and Fingerposer? Well, that might cause confusion of which is which though. Finger / Note / Key / Piano / Player / Automaton / Engine / Gadget / Mechanic / Fox?
-	This is the program that takes my format and reads it, so it knows where to move fingers and when / for how long.
-	FUNCTIONAL FOX?
-TBD: Early development GUI that will show the expected behavior of the Live Player
-	Short term (ie, before we move the player to the arduino), we're going to make a basic gui in java that shows the position of fingers on a keyboard, with a log for when fingers move, maybe itll play live, idk
-	It'll exist to help development and testing / debugging of the actual transposer and player.
-	FEIGNER FOX?
-	
-	
-	
-Program terminology:
-MusicNote - an individual note from a song / sheet music / what have you. Contains at least the note, octave, and duration.
-MusicSlice - A collection of all MusicNotes that need to be struck at one very specific period of time
-MusicSheet - a collection of slices (thus, ultimately a collectino of all music notes and when they need to be hit)
-FingerAssigner - this knows the positions of all the fingers, and processes a music sheet, assigning instructions to fingers.
-FingerInstruction - an individual "message" telling a single finger to move to a given note and to press it for a given duration
+		
 
 
+	
