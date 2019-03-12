@@ -1,0 +1,7 @@
+From musicxml's official site:
+	Encoding sample:
+		https://www.musicxml.com/publications/makemusic-recordare/notation-and-analysis/a-sample-musicxml-encoding/
+	Hello world:
+		https://www.musicxml.com/tutorial/hello-world/
+	Others (by name):
+		https://www.musicxml.com/music-in-musicxml/example-set/

@@ -27,7 +27,7 @@ Additional utilities, such as a "Song stats analyzer" (name TBD), may be develop
 
 	
 
-	
+
 Technical information:
 
 The yamaha dgx205 keyboard I am intending to try the arduino piano player on contains 45 white keys and 31 black keys, for a total of 76 keys. Its first key is an E. Its last key is a G.
@@ -38,7 +38,7 @@ Tentative: my music file format will, at a minimum, need to know for each note:
 		TIMESTAMP IN SONG (likely in milliseconds):
 		NOTE:
 		OCTAVE: (include this in the note itself?)
-		WHETHER IT IS FLAT OR SHARP:
+		WHETHER IT IS FLAT OR SHARP: (we don't care about the key, so there must always be a sharp or flat indicator present if the note is sharp or flat)
 		NOTE DURATION: (note, some amount may be subtracted from this, so if it was 1 second, it may be 0.9 so it can have time to get to the next note)
 						we may also need to store bpm, whether it is a quarter note, half note, whole note, and so on?
 							and we may have to reject notes that are too small, like 1/8th, 1/16th, 1/32th ... notes.
@@ -82,11 +82,17 @@ RASPBERRY FOX:
 	
 
 Remaining questions:
-	
+
+What other formats should we consider being able to import?
+	MIDI - other programs out there can convert midi to text file, so we could work from one of those?
+
 How many fingers will the physical hardware have?
 	Keeping in mind humans only have ten fingers, albeit some advanced chords call for moves like having the thumb depress 2 notes at the same time.
 	To have a decent range, we probably want to consider having at least 3 fingers for the arduino's "left hand" and 3 for its "right hand", meaning 6 total at a minimum.
 
+Hey, maybe we could do some minor arduino testing with LED's?
+Maybe we'll put some LED's on the actual fingers too?
+	
 Do we need fingers to let go of their key slightly early, to quickly move to the next key it needs to hit?
 For example: given there is only ONE FINGER in this example (or, highly situational - no other fingers will be able to reach the key in time due to their positions / being blocked by other fingers),
 	         and the one finger is hitting an arbitrary key (let's say a quarter note), and then needs to move and hit an adjacent note next to it (another quarter note).
@@ -135,8 +141,30 @@ Best way to determine and store "duration" ? Since we need to worry about bpm / 
 		So we read in a song, we see idk 80 bpm, determine a beat is (lets pretend) 1 second, we store that 1 second, and pull it whenever we need to know how long a quarter note / half note / whole note etc is
 			And we'll store it in seconds or milliseconds, so like, perhaps we'll determine and store it as 950ms
 
+I'd hate to mark up the piano, but if we need to orient it, we could place a sticker or a bright piece of paper on a key (first key? some middle c?), and have a camera at one end of the track,
+	in case it needs to do some like, micro adjustments. if it came down to having bright paper on every key, id be sad. should be able to just get an accurate width of key gaps and how much motor power to slide across key(s).
 
-		
+A very, very worst case scenario, if you can't find a way to have a motor move fingers across a track, would be to put... 76 individual fingers, one for each key : )
+	While that isn't the goal of my project, you could probably get some crazy arpeggio's / some crazy ridiculous songs to work since there wouldn't be any sliding needed.
+
+Will it be able to play Recollection? I could never do the last 45 seconds.
 
 
-	
+
+
+Perfectionism / Future:
+
+MusicXML translating:
+	Issue 1:
+		Wanted to have a rule to never modify the xml files, but some musicxml DTD's give me a 403 error, and then modifying the xml by hand to change to a different DTD causes some entities to fail to resolve, such as "&auml" in <text> elements.
+			org.xml.sax.SAXParseException; systemId: file:/// REDACTED; lineNumber: 41; columnNumber: 40; The entity "auml" was referenced, but not declared.
+		Ultimately I just end up removing both the reference to the 403 DTD and the &___ entities that fail to resolve.
+	Issue 2:
+		Sometimes the musicxml contains parts we don't want to convert, such as multiple instruments that aren't piano. While we could leave them in and convert the pitches to piano keys, these non-piano parts are another thing I delete from the files manually sometimes.
+	Issue 3:
+		How to handle multiple voices, when the other voices aren't piano? Have been manually deleting unwanted voices from the xml. There are a few different options:
+			1. Export each voice to an individual .alc file, with the name of the voice / instrument included in the file name?
+			2. Merge all the voices into one .alc file anyway? May be very dissonant / messy merging different instruments into one piano track.
+			3. Specify which voice(s) you want to keep as an optional input parameter. I'm not positive but I think voices can be named anything, so it wouldn't be as simple as just hardcoding to target "Piano", hence optional input parameter(s)
+			
+			
