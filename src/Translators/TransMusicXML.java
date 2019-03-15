@@ -1,5 +1,6 @@
 package Translators;
 
+import java.util.Collections;
 import java.util.LinkedList;
 
 import javax.xml.parsers.SAXParser;
@@ -56,10 +57,12 @@ public class TransMusicXML {
 	}
 	
 	// wrapper around fields relating to the Note node
-	public class NoteNode {
+	public class NoteNode implements Comparable<NoteNode> {
 		private double alter; // -1 = flat, 1 = sharp, and decimal values are microtones, so we can't store it in an integer
-		private int duration;
+		private int duration; // the duration this note is played for
+		private int measure; // informational only, to confirm we are reading the xml and "backing up" correctly, don't anticipate needing this for converting to time slices
 		private int octave;
+		private int startTime; // when the note should be played in the song (based on a rolling duration value)
 		private String step;
 		private boolean isRest; // if true, indicates this is a rest, and will not have an octave, step, or alter indicator
 		private boolean isChord; // if true, indicates this note is to be played with the previous note(s)
@@ -77,8 +80,14 @@ public class TransMusicXML {
 		public int getDuration() {
 			return duration;
 		}
+		public int getMeasure() {
+			return measure;
+		}
 		public int getOctave() {
 			return octave;
+		}
+		public int getStartTime() {
+			return startTime;
 		}
 		public String getStep() {
 			return step;
@@ -102,8 +111,14 @@ public class TransMusicXML {
 		public void setIsRest(boolean val) {
 			isRest = val;
 		}
+		public void setMeasure(int val) {
+			measure = val;
+		}
 		public void setOctave(int val) {
 			octave = val;
+		}
+		public void setStartTime(int val) {
+			startTime = val;
 		}
 		public void setStep(String val) {
 			step = val;
@@ -113,21 +128,39 @@ public class TransMusicXML {
 			String data = "NoteNode details - ";
 
 			// full raw data
-			//data += "step: " + step + ", octave: " + octave + ", duration: " + duration + ", alter: " + alter + ", isRest: " + isRest + ", isChord: " + isChord;
+			//data += "start time: " + startTime + ", step: " + step + ", octave: " + octave + ", duration: " + duration + ", alter: " + alter + ", isRest: " + isRest + ", isChord: " + isChord;
 			
 			// conditional to display less data based on whether it is a note or a rest
 			if (isRest) { // if it is a rest, we can exclude step, octave, and alter
-				data  += "rest note, duration: " + duration;
+				data  += "rest note, start time: " + startTime + ", duration: " + duration + ", measure: " + measure;
 			} else {
-				data += "step: " + step + ", octave: " + octave + ", duration: " + duration + ", alter: " + alter + ", isChord: " + isChord;
-			}
-			
-			// additional spacing to more easily separate chords from not-chords in the logging
-			if (!isChord) {
-				data = "\r\n" + data;
+				data += "start time: " + startTime + ", step: " + step + ", octave: " + octave + ", duration: " + duration + ", measure: " + measure + ", alter: " + alter + ", isChord: " + isChord;
 			}
 			
 			return data;
+		}
+
+		public int compareTo(NoteNode other) {
+			int returnVal = 0;
+
+			// we will compare on a few different tiers:
+			// if the notes have the same start time, then we'll effectively try to go musically-alphabetically / left-to-right across the piano surface.
+			// we'll compare octave, and if they're the same, then we compare note (step), and if those are the same, then we'll compare alter.
+			if (startTime == other.getStartTime()) {
+				if (octave == other.getOctave()) {
+					if (step == other.getStep()) {
+						returnVal = Double.compare(alter, other.getAlter());
+					} else {
+						returnVal = step.compareTo(other.getStep());
+					}
+				} else {
+					returnVal = Integer.compare(octave, other.getOctave());
+				}
+			} else {
+				returnVal = Integer.compare(startTime, other.getStartTime());
+			}
+			
+			return returnVal;
 		}
 	}
 	
@@ -135,7 +168,8 @@ public class TransMusicXML {
 		
 		AttributeNode attrNode = null;
 		NoteNode currentNote = null;
-		LinkedList<NoteNode> noteNodes = null;
+		// This collection will hold all notes as they are read from the xml, with the intention of sorting them into their playing-order once it contains all notes.
+		LinkedList<NoteNode> notes = new LinkedList<NoteNode>();
 		StringBuilder data = null;
 		
 		// attribute fields:
@@ -153,8 +187,9 @@ public class TransMusicXML {
 		private boolean hasChord = false;
 		
 		// misc / rolling counter fields:
-		private boolean hasBackup = false;
-		private boolean hasMeasure = false;
+		private int currentMeasure = -1; // purely for debugging / confirming we are reading the xml properly, we likely won't need this value for converting to time slices
+		private int rollingDuration = 0;
+		private int previousStartTime = 0;
 		
 		public InputSource resolveEntity(java.lang.String publicId,
                 java.lang.String systemId)
@@ -170,8 +205,8 @@ public class TransMusicXML {
 			if (attrNode == null) {
 				attrNode = new AttributeNode();
 			}
-			if (noteNodes == null) {
-				noteNodes = new LinkedList<NoteNode>();
+			if (notes == null) {
+				notes = new LinkedList<NoteNode>();
 			}
 			
 			// if we're on a new Note node, then create a new object to store its values.
@@ -212,13 +247,21 @@ public class TransMusicXML {
 				hasChord = true;
 			}
 			
-			// TODO misc - rolling counters? TBD
+			// misc / rolling counters
 			if (qName.equalsIgnoreCase("measure")) {
-				hasMeasure = true;
+				// the measure we are currently on is stored in the "number" attribute.
+				// measures wrap around many notes - it is not a 1:1 ratio
+				// we only need to store the last measure number we've seen, and use it for all notes it encapsulates.
+				// when we get to a new measure, the current value will be overwritten with its number.
+				for (int x = 0; x < attributes.getLength(); ++x) {
+					String attrName = attributes.getQName(x);
+					if (attrName.equalsIgnoreCase("number")) {
+						currentMeasure = Integer.parseInt(attributes.getValue(x));
+					}
+				}
 			}
-			if (qName.equalsIgnoreCase("backup")) {
-				hasBackup = true;
-			}
+			// see endElement's explanation in the hasDuration conditional for how "backup" is handled
+			// (the issue is, 2 separate nodes both share the same name "Duration" - one in <Note> and one in <Backup>
 		}
 		
 		public void endElement(String uri, String localName, String qName) {
@@ -242,24 +285,54 @@ public class TransMusicXML {
 				currentNote.setOctave(Integer.parseInt(data.toString()));
 				hasOctave = false;
 			} else if (hasDuration) {
-				currentNote.setDuration(Integer.parseInt(data.toString()));
+
+				// this is very important - there are 2 different nodes that both have the same name, "duration".
+				// one is within <Note> and denotes the length of time the note should be hit for.
+				// the other is within <Backup> and denotes how much the xml should be "rewound" to place notes
+				//  behind our current location within the xml.
+				// since they both have the same name ("duration"), we will need to know whether it is the first instance
+				//  of seeing "duration" (which is within a note), or the 2nd instance (which is within backup).
+				// the easiest way to tell will be: does the note already have a non-0 duration?
+				// if it does, then we know to instead rewind, rather than overwrite the currentnote's already-set duration.
+				if (currentNote.getDuration() == 0) {
+					currentNote.setDuration(Integer.parseInt(data.toString()));
+				} else {
+					rollingDuration -= Integer.parseInt(data.toString()); // this rewinds our location within the xml sheet music to an earlier point
+				}
 				hasDuration = false;
+				
 			} else if (hasRest) {
 				currentNote.setIsRest(true);
 				hasRest = false;
 			} else if (hasChord) {
 				currentNote.setIsChord(true);
 				hasChord = false;
-			} else if (hasMeasure) {
-				// TODO tbd
-			} else if (hasBackup) {
-				// TODO tbd
 			}
 			
 			
 			// if we have finished processing a Note node, then insert it into the collection of NoteNodes
+			// there are a few complicated rules around the note's start duration, and the rolling duration.
+			// 1. store the "current" start time as the "previous" start time
+			// 2. update the rolling duration (aka our current time location within the song) by the current note's duration only if it isn't part of a chord.
+			//    2a. if the note IS part of a chord, then its duration is already accounted for in the rolling duration. HOWEVER, since it is part of a chord with the previous note,
+			//        we still need it to start at the same time as the previous note, so set its start time to the "previous" start time instead. 
+			// TODO - is it possible for an individual note within a chord in musicxml to have a duration longer than any other note in the chord?
+			//        If so, do we need to find the maximum duration?
+			// TODO if a new note is added afterwards that is not part of this chord, but lies in a position between the previous note's start time but also before its duration ends,
+			//       then will the xml account for it by "backing up" to correctly set the right start location?
 			if (qName.equalsIgnoreCase("note")) {
-				noteNodes.add(currentNote);
+				if (currentNote.isChord) {
+					currentNote.setStartTime(previousStartTime);
+				} else {
+					currentNote.setStartTime(rollingDuration);
+					previousStartTime = rollingDuration;
+					rollingDuration += currentNote.getDuration();
+				}
+
+				// measures are expected to be wrapped around many notes, so just grab the latest measure value we stored
+				currentNote.setMeasure(currentMeasure);
+				
+				notes.add(currentNote);
 			}
 		}
 		
@@ -271,15 +344,15 @@ public class TransMusicXML {
 			return attrNode;
 		}
 		
-		public LinkedList<NoteNode> getNoteNodes() {
-			return noteNodes;
+		public LinkedList<NoteNode> getNotes() {
+			return notes;
 		}
 	}
 	
 	public boolean parseMusicXMLFile(String xmlFilePath) {
 		boolean isSuccessful = false;
 		AttributeNode attrNode = null;
-		LinkedList<NoteNode> noteNodes = null;
+		LinkedList<NoteNode> notes = null;
 	
 		try {
 			
@@ -338,28 +411,35 @@ public class TransMusicXML {
 			// There is a BACKUP element. This causes the sheet music to roll back in time.
 			// This is typically used after finishing the measure in one clef (such as placing all the treble clef notes) - it will then back up to the start of the measure,
 			// so it can place the bass clef notes.
-			// My original implementation did not account for this when creating a linear linkedlist in the order of reading notes on simple (1 clef) songs.
-			// Proposed ways to handle it:
-			// Keep a rolling "start duration" value while creating note nodes. This way, when we see to backup x duration, we can simply subtract that from the running total,
+			// We keep a rolling "start duration" value while creating note nodes. This way, when we see to backup x duration, we can simply subtract that from the running total,
 			//   and new notes (for the 2nd clef / staff / whichever) will have their correct "start duration."
-			//      The collection can later be sorted by "start duration."
-			//         This may also result in the addition of more chords that don't rely on the <chord/> element, because they were on different staves.
+			//      The collection is later sorted by "start duration.", then octave, step, etc.
+			//         This also results in the addition of more chords (technically, since at the same start time) that don't rely on the <chord/> element, because they were on different staves.
 			//             That is, we could have a chord on the treble clef of 4 notes, while also playing 2 notes on the bass clef, but in musicxml only 4 of those 6 notes are marked w/ <chord/>
-			// Alternatively, we could consider a new collection for storing notes.
-			//   Perhaps the key is the "start duration", and the value is a collection of all notes to be played at that start duration.
-			// Additionally, we could have a rolling counter of which measure we're all too, increment it every time you get to a new measure block.
-			//    Just for more user-friendly readability in the log, since it got a little wild for a bit between jumping across staves in addition to changing clef signs within the current staff.
-			
-			
-			
+			// Additionally, notes that are chords will have special rules not to increment the rolling duration with an already-account-for duration from the first note,
+			//   nor will it use the rolling duration already incremented by the first note in the chord (it will instead use the "previous" rolling duration)
+						
 			// We end up with one attribute object and a collection of note objects
 			saxParser.parse(xmlFilePath, musHandler);
 			attrNode = musHandler.getAttributeNode();
-			noteNodes = musHandler.getNoteNodes();
+			notes = musHandler.getNotes();
 			
-			System.out.println(attrNode);
-			for (int x = 0; x < noteNodes.size(); ++x) {
-				System.out.println(noteNodes.get(x));
+			System.out.println(attrNode + "\n");
+			
+			Collections.sort(notes);
+			int previousStartTime = 0;
+			int currentStartTime = 0;
+			for (int x = 0; x < notes.size(); ++x) {
+				NoteNode note = notes.get(x);
+				
+				previousStartTime = currentStartTime;
+				currentStartTime = note.getStartTime();
+				// extra newlines for readability between different start times
+				if (previousStartTime != currentStartTime) {
+					System.out.println("");
+				}
+				
+				System.out.println(note);
 			}
 			
 			isSuccessful = true;

@@ -83,6 +83,8 @@ RASPBERRY FOX:
 
 Remaining questions:
 
+Whoops, I think we do need to init the starting octave and not just always assume it will be 1. Because the musicxml sets the octave values. You will need to determine it on a per-piano basis.
+
 What other formats should we consider being able to import?
 	MIDI - other programs out there can convert midi to text file, so we could work from one of those?
 
