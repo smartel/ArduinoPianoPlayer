@@ -1,0 +1,46 @@
+ALC FILE DEFINITION
+While this file isn't exactly meant to be human readable, it is not serialized.
+Values are stored as whitespace-delimited tokens, and their location in the file matters.
+
+THE FIRST LINE of an alc file is purely informational, and may contain the song name, artist name, transcriber name, and so on. Internal processes / the String tokenizer will completely ignore this line.
+
+THE SECOND LINE of an alc file contains the number of note objects within the file, as a rudimentary integrity check.
+When an alc file is read in, if a mismatch is noticed between the number of notes generated versus the expected number of notes per the header line count, it will produce a warning or error
+that the file may be damaged.
+	1. Note count
+	
+ALL FOLLOWING LINES of an alc file represent individual music notes each (so a chord takes multiple lines), in the order they are meant to be played
+(the "start time" increases as you go down the lines - if the start time is the same on multiple lines, it means they are all played simultaneously):
+	1. start time to play the note (in milliseconds), integer
+	2. "compare value" of a note (NoteUtils takes the note's letter, octave, and whether it is sharp or flat, and converts it into a single number representing which key to hit), double
+		NOTE: A rest will have a compare value of 0, as it has no letter, octave, or sharp/flat values.
+	3. duration to play the note for (in milliseconds), integer
+
+	
+	
+	
+	
+===========================================================================================================
+	
+INITIAL SCRAPPED IDEAS FOR LINE 2 AND LINES 3+:
+Purely here for historical purposes, may delete after this file's first commit.
+
+<!-- Original header line idea that was scratched, I don't think we need this "header information" if we have the start time and duration in milliseconds for all notes.
+     It is irrelevant to the arduino's operation
+THE SECOND LINE will always be the "header" information, which are these values in order, per musicxml's design:
+	1. beats (numerator of the time signature), integer
+	2. beat type (denominator of the time signature), integer
+	3. divisions per quarter note, integer
+	(alternatively, would we put bpm in the header, if we read it in from input args or find a way to compute it?)
+
+ALL FOLLOWING LINES will represent individual music notes each (so a chord takes multiple lines), in the order they are meant to be played
+(the "start time" increases as you go down the lines - if the start time is the same on multiple lines, it means they are all played simultaneously):
+	1. start time to play the note (in milliseconds), integer
+	2. step (note) designation ("A" through "G", or "R" if a rest), String
+	3. octave, integer. 
+		NOTE: This value is ignored if the note is a rest ("R" step), and the standard will be to set the octave to a value of 0 in this case.
+	4. alter, integer, where -1 represents the note being a flat, +1 represents the note being a sharp. This distinction is important, as musicxml would allow for microtones (with alter being a double)
+		0 is the expected default state, and is neither sharp nor flat.
+		NOTE: This value is ignored if the note is a rest ("R" step), and the standard will be to set the alter to a value of 0 in this case.
+	5. duration to play the note for (in milliseconds), integer.
+-->

@@ -83,6 +83,10 @@ RASPBERRY FOX:
 
 Remaining questions:
 
+How to handle musicxml duration - can we just multiply it based on some per-song-basis "bpm" (like our Beethoven example is a lot of 92 durations, we could multiply every duration by idk, 2, and treat it as milliseconds?)
+
+Do we care to serialize / encrypt the .alc file? I think I'd rather it be sort of human-readable, ala musicxml. That would also allow for slight modifications by hand.
+
 Whoops, I think we do need to init the starting octave and not just always assume it will be 1. Because the musicxml sets the octave values. You will need to determine it on a per-piano basis.
 
 What other formats should we consider being able to import?

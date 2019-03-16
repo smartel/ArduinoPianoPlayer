@@ -1,5 +1,8 @@
 package Translators;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.Collections;
 import java.util.LinkedList;
 
@@ -10,6 +13,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
+import Utils.Constants;
+import Utils.NoteUtils;
 
 /**
  * Code to translate a musicxml file into my format (.alc)
@@ -310,7 +316,7 @@ public class TransMusicXML {
 			}
 			
 			
-			// if we have finished processing a Note node, then insert it into the collection of NoteNodes
+			// if we have finished processing a Note node, then insert it into the collection of NoteNodes.
 			// there are a few complicated rules around the note's start duration, and the rolling duration.
 			// 1. store the "current" start time as the "previous" start time
 			// 2. update the rolling duration (aka our current time location within the song) by the current note's duration only if it isn't part of a chord.
@@ -349,11 +355,30 @@ public class TransMusicXML {
 		}
 	}
 	
-	public boolean parseMusicXMLFile(String xmlFilePath) {
+	/**
+	 * Attempts to translate the provided xml / musicxml file (xmlFilePath) into an Alchemized Music Data File, stored at (alcFilePath)
+	 * @param xmlFilePath filepath for the xml / musicxml file to translate
+	 * @param alcFilePath filepath to write the output .alc file to
+	 * @return true if successfully translated and output an .alc file, false otherwise. if it translated but failed to output an .alc file (such as due to file permissions),
+	 * 		        it will still return false, but the valid contents of the .alc file may be available in the standard output terminal.
+	 */
+	public boolean parseMusicXMLFile(String xmlFilePath, String alcFilePath) {
 		boolean isSuccessful = false;
 		AttributeNode attrNode = null;
 		LinkedList<NoteNode> notes = null;
+		int previousStartTime;
+		int currentStartTime;
+		int startTimeInMs;
+		int durationInMs;
+		double compValue;
+		
+		// the contents of the .alc file. The first line is purely informational and mentions which file was translated.
+		// The rest of the contents are generated after translation has completed, during printing of the song details for manual review.
+		String alcContent = "Alchemized Music Data File generated from translation of the following .musicxml file: " + xmlFilePath + "\n";
 	
+		// placeholder multiplier intended to convert note durations to milliseconds. more research needed. may end up using a beats-per-minute conversion and taking bpm as an input arg.
+		final int TEMP_MS_CONVERSION_MULT = 10;
+		
 		try {
 			
 			// Opting to use a SAX parser since it'll be faster and more efficient than DOM. We only need to read the xml, not write anything.
@@ -406,8 +431,6 @@ public class TransMusicXML {
 			// Do we care about <Type> in either case ? I think it might just be informational / for display purposes, ie "eighth", "16th", "whole", "quarter", etc.
 			// We have the duration and divisions/time signature already to determine length
 			
-			// TODO:
-			// CRITICAL:
 			// There is a BACKUP element. This causes the sheet music to roll back in time.
 			// This is typically used after finishing the measure in one clef (such as placing all the treble clef notes) - it will then back up to the start of the measure,
 			// so it can place the bass clef notes.
@@ -423,12 +446,15 @@ public class TransMusicXML {
 			saxParser.parse(xmlFilePath, musHandler);
 			attrNode = musHandler.getAttributeNode();
 			notes = musHandler.getNotes();
-			
+			Collections.sort(notes);
+
+			// Display for manual review while also creating a string representation of our .alc format
 			System.out.println(attrNode + "\n");
 			
-			Collections.sort(notes);
-			int previousStartTime = 0;
-			int currentStartTime = 0;
+			// add in the header line containing the total note count, which is used to check the integrity of the .alc file later on when the notes are read in
+			alcContent += notes.size() + "\n";
+			
+			currentStartTime = 0;
 			for (int x = 0; x < notes.size(); ++x) {
 				NoteNode note = notes.get(x);
 				
@@ -439,17 +465,55 @@ public class TransMusicXML {
 					System.out.println("");
 				}
 				
+				// TODO
+				// perform conversion of the note's duration and start time values into milliseconds.
+				// For the time being, we're using a placeholder multiplier.
+				// The real value to use may be passed in, whether it is a multiplier, or perhaps the song's bpm to help determine durations. Research needed.
+				startTimeInMs = note.getStartTime() * TEMP_MS_CONVERSION_MULT;
+				durationInMs = note.getDuration() * TEMP_MS_CONVERSION_MULT;
+				
+				// Determine the compareValue to write to the .alc file
+				
+				// We need to handle musicxml's microtones. Our .alc file only allows for sharps and flats (1 and -1 respectively).
+				// So, if we have a microtone (some value between 0 and 1, or 0 and -1), I guess we'll have to decide whether it is closer to 0 or closer to +-1. Round it.
+				double currentAlter = note.getAlter();
+				if (currentAlter == 1 || currentAlter >= 0.5) { // treat as a sharp
+					note.setAlter(1);
+				} else if (currentAlter == -1 || currentAlter <= -0.5) { // treat as a flat
+					note.setAlter(-1);
+				} else { // 0 or close enough to round to 0, so a neutral note
+					note.setAlter(0);
+				}
+					
+				compValue = NoteUtils.generateCompareValue(note.getStep(), note.getOctave(), note.getAlter() == 1 ? true : false,
+						                                                                     note.getAlter() == -1 ? true : false);
+
+				alcContent += startTimeInMs + " " + compValue + " " + durationInMs + "\n";				
 				System.out.println(note);
 			}
-			
+
 			isSuccessful = true;
+			
+			// display the full contents of the .alc file, as well as export it to the desired filepath
+			System.out.println("Full contents of the .alc string:\n-------------\n" + alcContent);			
+			try {
+				BufferedWriter bw = new BufferedWriter(new FileWriter(new File(alcFilePath)));
+				bw.write(alcContent);
+				bw.close();
+				
+			} catch (Exception e) {
+				System.out.println("[TransMusicXML#parseMusicXMLFile] Exception caught while attempting to write the .alc file to disk at path [ " + alcFilePath + " ]: " + e.getMessage());
+				e.printStackTrace();
+				isSuccessful = false;
+			}
+			
 		} catch (Exception e) {
 			System.out.println("Exception caught attempting to translate MusicXML file: " + xmlFilePath + "\r\nStack trace:\r\n");
 			e.printStackTrace();
 			isSuccessful = false; // ensuring we return false
 		}
 		
-		return isSuccessful; // TODO allow this to actually return true at some point
+		return isSuccessful;
 	}
 	
 	

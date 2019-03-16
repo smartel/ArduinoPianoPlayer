@@ -45,4 +45,10 @@ public class Constants {
 	final public static String E_NOTE = "E";
 	final public static String F_NOTE = "F";
 	final public static String G_NOTE = "G";
+	final public static String REST_NOTE = "REST";
+	
+	// Standard values when dealing with Rest notes (which don't have an octave, alter, ...)
+	final public static double REST_COMP_VALUE = 0; // A rest note has a compare value of 0.0, as it has no step, no octave, no alter, ...
+	final public static int REST_OCTAVE_VALUE = 0;
+	final public static double REST_ALTER_VALUE = 0;
 }
