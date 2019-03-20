@@ -304,4 +304,73 @@ public class NoteUtilsTests {
 		boolean validCompVal = compVal == 0;
 		assertTrue(validCompVal);
 	}
+	
+	// GetNoteForPosition tests
+
+	@Test
+	public void testGetNoteForPosition1() {
+		String val = NoteUtils.getNoteForPosition(1);
+		assertTrue(val.equalsIgnoreCase(Constants.A_NOTE));
+	}
+
+	@Test
+	public void testGetNoteForPosition2() {
+		String val = NoteUtils.getNoteForPosition(2);
+		assertTrue(val.equalsIgnoreCase(Constants.B_NOTE));
+	}
+	
+	@Test
+	public void testGetNoteForPosition3() {
+		String val = NoteUtils.getNoteForPosition(3);
+		assertTrue(val.equalsIgnoreCase(Constants.C_NOTE));
+	}
+	
+	@Test
+	public void testGetNoteForPosition4() {
+		String val = NoteUtils.getNoteForPosition(4);
+		assertTrue(val.equalsIgnoreCase(Constants.D_NOTE));
+	}
+	
+	@Test
+	public void testGetNoteForPosition5() {
+		String val = NoteUtils.getNoteForPosition(5);
+		assertTrue(val.equalsIgnoreCase(Constants.E_NOTE));
+	}
+	
+	@Test
+	public void testGetNoteForPosition6() {
+		String val = NoteUtils.getNoteForPosition(6);
+		assertTrue(val.equalsIgnoreCase(Constants.F_NOTE));
+	}
+	
+	@Test
+	public void testGetNoteForPosition7() {
+		String val = NoteUtils.getNoteForPosition(7);
+		assertTrue(val.equalsIgnoreCase(Constants.G_NOTE));
+	}
+
+	@Test
+	public void testGetNoteForPosition0() {
+		String val = NoteUtils.getNoteForPosition(0);
+		assertTrue(val.equalsIgnoreCase(""));
+	}
+	
+	@Test
+	public void testGetNoteForPosition8() {
+		String val = NoteUtils.getNoteForPosition(8);
+		assertTrue(val.equalsIgnoreCase(""));
+	}
+	
+	@Test
+	public void testGetNoteForPosition10() {
+		String val = NoteUtils.getNoteForPosition(10);
+		assertTrue(val.equalsIgnoreCase(""));
+	}
+
+	@Test
+	public void testGetNoteForPositionNegative() {
+		String val = NoteUtils.getNoteForPosition(-1);
+		assertTrue(val.equalsIgnoreCase(""));
+	}
+	
 }

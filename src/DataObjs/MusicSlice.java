@@ -1,5 +1,6 @@
 package DataObjs;
 
+import java.util.Iterator;
 import java.util.TreeSet;
 
 /**
@@ -38,5 +39,25 @@ public class MusicSlice {
 	
 	// We shouldn't ever need a method to remove music notes? Since we're just transcribing xml / sheet music to a new format, and not editing the piece.
 	
+
+	/**
+	 * If this MusicSlice contains a note with the given compareValue, it returns true. otherwise, false.
+	 * @param compareValue A compareValue representing a note, to see if it is contained in this MusicSlice
+	 * @return true if this MusicSlice contains a MusicNote with the given compare value
+	 */
+	public boolean containsNote(double compareValue) {
+		boolean doesContain = false;
+		
+		Iterator<MusicNote> iter = notes.iterator();
+		while (iter.hasNext()) {
+			MusicNote note = iter.next();
+			if (note.getCompareValue() == compareValue) {
+				doesContain = true;
+				break;
+			}
+		}
+		
+		return doesContain;
+	}
 	
 }

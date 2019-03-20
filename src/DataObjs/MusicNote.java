@@ -8,7 +8,7 @@ import Utils.NoteUtils;
  * 
  * @author smartel
  */
-public class MusicNote {
+public class MusicNote implements Comparable<MusicNote> {
 
 	/**
 	 * Which Note (A,B,C,D,E,F,G) to hit

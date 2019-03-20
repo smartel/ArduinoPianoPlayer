@@ -1,5 +1,7 @@
 package Utils;
 
+import java.awt.Color;
+
 public class Constants {
 
 	// The positions of notes within an octave, with A being the first white key in the octave (1), and G being the last white key (7)
@@ -51,4 +53,20 @@ public class Constants {
 	final public static double REST_COMP_VALUE = 0; // A rest note has a compare value of 0.0, as it has no step, no octave, no alter, ...
 	final public static int REST_OCTAVE_VALUE = 0;
 	final public static double REST_ALTER_VALUE = 0;
+	
+	// Piano Feigner (gui) key sizes
+	final public static int WHITE_KEY_WIDTH = 27;
+	final public static int WHITE_KEY_HEIGHT = 170;
+	final public static int BLACK_KEY_WIDTH = 18;
+	final public static int BLACK_KEY_HEIGHT = 125;
+	// Various magic numbers for spacing within the piano gui
+	final public static int LETTER_X_BUFFER = (WHITE_KEY_WIDTH / 2) - 2;
+	final public static int LETTER_Y_BUFFER = WHITE_KEY_HEIGHT - 30;
+	final public static int LETTER_HEIGHT = 30;
+	final public static int LETTER_WIDTH = 30;
+	// colors
+	final public static Color WHITE_KEY_COLOR = Color.WHITE;
+	final public static Color KEY_BORDER_COLOR = Color.BLACK;
+	final public static Color BLACK_KEY_COLOR = Color.BLACK;
+	final public static Color HIT_KEY_COLOR = Color.YELLOW;
 }

@@ -95,7 +95,63 @@ public class NoteUtils {
 		return value;
 	}
 	
+	/**
+	 * Helper method that, when given a natural note (such as A, B, C, D, E, F, or G), will return its position within an octave (ie, A=1, B=2, ... G=7)
+	 * This is basically the opposite of getNoteForPosition.
+	 * @return integer representing the note's position within an octave. if a position can't be determined, -1 is returned instead.
+	 */
+	public static int getPositionForNote(String note) {
+		int value = -1;
+		
+		if (note.equalsIgnoreCase(Constants.A_NOTE)) {
+			value = (int)Constants.A_POS;
+		} else if (note.equalsIgnoreCase(Constants.B_NOTE)) {
+			value = (int)Constants.B_POS;
+		} else if (note.equalsIgnoreCase(Constants.C_NOTE)) {
+			value = (int)Constants.C_POS;
+		} else if (note.equalsIgnoreCase(Constants.D_NOTE)) {
+			value = (int)Constants.D_POS;
+		} else if (note.equalsIgnoreCase(Constants.E_NOTE)) {
+			value = (int)Constants.E_POS;
+		} else if (note.equalsIgnoreCase(Constants.F_NOTE)) {
+			value = (int)Constants.F_POS;
+		} else if (note.equalsIgnoreCase(Constants.G_NOTE)) {
+			value = (int)Constants.G_POS;
+		} else {
+			System.out.println("NoteUtils#getPositionForNote - error - invalid note value passed in, position can't be determined. note: " + note);
+		}
+		
+		return value;
+	}
 	
-	
+	/**
+	 * Helper method that, when given a position within an octave (such as 1 (1st note), 2 (2nd note), 3 (3rd note), ... 7 (7th note)),
+	 * will return the note letter for this position (ie, 1=A, 2=B,, ... 7=G)
+	 * This is basically the opposite of getPositionForNote.
+	 * @return String letter representing the note letter. If a value can't be determined, an empty String will be returned.
+	 */
+	public static String getNoteForPosition(int position) {
+		String value = "";
+		
+		if (position == 1) {
+			value = Constants.A_NOTE;
+		} else if (position == 2) {
+			value = Constants.B_NOTE;
+		} else if (position == 3) {
+			value = Constants.C_NOTE;
+		} else if (position == 4) {
+			value = Constants.D_NOTE;
+		} else if (position == 5) {
+			value = Constants.E_NOTE;
+		} else if (position == 6) {
+			value = Constants.F_NOTE;
+		} else if (position == 7) {
+			value = Constants.G_NOTE;
+		} else {
+			System.out.println("NoteUtils#getNoteForPosition - error - invalid position value passed in, note letter can't be determined. position: " + position);
+		}
+		
+		return value;
+	}
 	
 }

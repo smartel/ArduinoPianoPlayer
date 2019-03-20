@@ -57,12 +57,20 @@ While my file format will have unedited durations, the durations may need to be 
 Project name: PianoPlayer
 Project terminology:
 
+Music data file terms:
 Translate - converting from one standard file format (such as MusicXML) to my file format (.alc, Alchemized Music Data File)
 Transpose - converting from my file format (.alc) to the raw instructions (.fng file) sent to the arduino to play the piano
 
+Finger Terms:
+Collision - When a robotic "finger" tries to move to a key, but a different finger is in the way (whether still or moving in the opposite direction, or the same direction at a slower speed),
+		    causing the two fingers to physically clash.
+Blocking - When a robotic "finger" is impeding the path of another finger without actual collission occurring, such as there being only 2 fingers on the given piano,
+		   and one finger is stuck playing a key (for example, a long held note), and the other finger needs to go from hitting keys on the left side of the stuck finger to keys on the right side,
+		   but that's impossible since the track only allows for one finger at one position at a time, so it can't get past the holding finger, so the holding finger is "blocking" the other finger.
 Lost Time - not sure if this will be a real issue yet. But if a finger has to stop depressing a note early, to move to its next note to hit (say, .10 seconds early),
 	        we'll consider that .10 seconds of "lost (play)time"
 
+File Formats:
 .alc file format - My alchemized music data file, which is how my program processes music note information. This exists so I only need to process one format.
 	"Translators" will exist to convert other standard formats (like MusicXML) into my format
 .fng file format - My "finger instruction" file, that contains the commands to be sent to the arduino to play the music piece.
@@ -82,6 +90,18 @@ RASPBERRY FOX:
 	
 
 Remaining questions:
+
+We could consider 2 different implementations ; or at least, we could develop both in the sideware side, even if we only implement one physically.
+	Sliding fingers - aka the initial idea, where we may have to withdraw fingers a tad early to slide them to new locations, need to watch for blocking, determine min number of fingers needed per song, ...
+	No sliding fingers - I wouldn't call it "fingerless", instead, we'd have one finger PER KEY. This is technically less impressive but it would also be able to perform feats the sliding one (and my bare hands) can only dream of.
+		So while less technically impressive (since we don't account for sliding, collisions / blocking, ...), it would be more piano-playing-impressive.
+
+LEDs?
+	With a "no sliding fingers" implementation, we could throw in LEDs, sort of like a "how to play the song" mode.
+	This could go 1 of 2 ways:
+		1. where LEDS light up, you hit the note(s), then the next LEDs light up
+		2. It just plays the whole song in LEDs only.
+	We could have the LEDs present anyway in the self-playing mode. It'd be a little more interesting to watch. Maybe assign 1 color LED per note letter? Like, all C's are green, all D's are blue, all E's are indigo, ... ROYGIBV perhaps.
 
 How to handle musicxml duration - can we just multiply it based on some per-song-basis "bpm" (like our Beethoven example is a lot of 92 durations, we could multiply every duration by idk, 2, and treat it as milliseconds?)
 
@@ -153,9 +173,10 @@ I'd hate to mark up the piano, but if we need to orient it, we could place a sti
 A very, very worst case scenario, if you can't find a way to have a motor move fingers across a track, would be to put... 76 individual fingers, one for each key : )
 	While that isn't the goal of my project, you could probably get some crazy arpeggio's / some crazy ridiculous songs to work since there wouldn't be any sliding needed.
 
-Will it be able to play Recollection? I could never do the last 45 seconds.
-
-
+SONGS TO REACH:
+	FFXI Recollection - I could never do the last 45 seconds.
+	DDLC Your Reality - the ultimate test for the arduino player. It destroyed my left hand.
+	Rolling Girl?
 
 
 Perfectionism / Future:
