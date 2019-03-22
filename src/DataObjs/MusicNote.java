@@ -73,7 +73,7 @@ public class MusicNote implements Comparable<MusicNote> {
 	 * @param duration The duration the rest should last for, in milliseconds
 	 */
 	public MusicNote(int duration) {
-		initializeNote(Constants.REST_NOTE, Constants.REST_OCTAVE_VALUE, duration, false, false);
+		initializeNote(Constants.NOTE_REST, Constants.REST_OCTAVE_VALUE, duration, false, false);
 		// TODO throw if initializeNote returns false?
 	}
 	
@@ -95,7 +95,7 @@ public class MusicNote implements Comparable<MusicNote> {
 		// Ensure the note is not marked as both sharp AND flat
 		if (isSharp && isFlat) {
 			// although, if it is a rest note, we only need to warn
-			if (note.equalsIgnoreCase(Constants.REST_NOTE)) {
+			if (note.equalsIgnoreCase(Constants.NOTE_REST)) {
 				System.out.println("MusicNote#initializeNote - warning - isSharp and isFlat both set to true, but on a rest note, so initialization will continue.\r\nConfirmation - isSharp: " + isSharp + ", isFlat: " + isFlat + ", note: " + note);
 			} else {
 				System.out.println("MusicNote#initializeNote - failed to initialize - isSharp and isFlat both set to true.\r\nConfirmation - isSharp: " + isSharp + ", isFlat: " + isFlat);
@@ -103,34 +103,34 @@ public class MusicNote implements Comparable<MusicNote> {
 			}
 		}
 		// Ensure the sharp or flat flags aren't set on a rest, but if they are, they can just be ignored and initialization can continue.
-		if (isSharp && note.equalsIgnoreCase(Constants.REST_NOTE)) {
+		if (isSharp && note.equalsIgnoreCase(Constants.NOTE_REST)) {
 			System.out.println("MusicNote#initializeNote - warning - isSharp is set to true on a Rest note. isSharp flag ignored.\r\nConfirmation - isSharp: " + isSharp + ", note: " + note);
 		}
 
-		if (isFlat && note.equalsIgnoreCase(Constants.REST_NOTE)) {
+		if (isFlat && note.equalsIgnoreCase(Constants.NOTE_REST)) {
 			System.out.println("MusicNote#initializeNote - warning - isFlat is set to true on a Rest note. isFlat flag ignored.\r\nConfirmation - isFlat: " + isFlat + ", note: " + note);
 		}
 		
 		// Ensure the note is a valid piano key
-		if ( (!note.equalsIgnoreCase(Constants.A_NOTE)) &&
-			 (!note.equalsIgnoreCase(Constants.B_NOTE)) &&
-			 (!note.equalsIgnoreCase(Constants.C_NOTE)) &&
-			 (!note.equalsIgnoreCase(Constants.D_NOTE)) &&
-			 (!note.equalsIgnoreCase(Constants.E_NOTE)) &&
-			 (!note.equalsIgnoreCase(Constants.F_NOTE)) &&
-			 (!note.equalsIgnoreCase(Constants.G_NOTE)) &&
-			 (!note.equalsIgnoreCase(Constants.REST_NOTE)) ) {
+		if ( (!note.equalsIgnoreCase(Constants.NOTE_A)) &&
+			 (!note.equalsIgnoreCase(Constants.NOTE_B)) &&
+			 (!note.equalsIgnoreCase(Constants.NOTE_C)) &&
+			 (!note.equalsIgnoreCase(Constants.NOTE_D)) &&
+			 (!note.equalsIgnoreCase(Constants.NOTE_E)) &&
+			 (!note.equalsIgnoreCase(Constants.NOTE_F)) &&
+			 (!note.equalsIgnoreCase(Constants.NOTE_G)) &&
+			 (!note.equalsIgnoreCase(Constants.NOTE_REST)) ) {
 			System.out.println("MusicNote#initializeNote - failed to initialize - unrecognized note value passed in.\r\nnote: " + note);
 			isSuccessful = false;
 		}
 		
 		// Ensure the note has a non-zero / non-negative octave, if it is not a rest note
-		if (octave <= 0 && (!note.equalsIgnoreCase(Constants.REST_NOTE))) {
+		if (octave <= 0 && (!note.equalsIgnoreCase(Constants.NOTE_REST))) {
 			System.out.println("MusicNote#initializeNote - failed to initialize - invalid octave value (0 or negative) for a non-rest note.\r\noctave: " + octave);
 			isSuccessful = false;
 		}
 		// Ensure the octave is zero if it is a rest note, but if it isn't, we only need to provide a warning, and can keep initializing
-		if (octave != 0 && (note.equalsIgnoreCase(Constants.REST_NOTE))) {
+		if (octave != 0 && (note.equalsIgnoreCase(Constants.NOTE_REST))) {
 			System.out.println("MusicNote#initializeNote - warning - non-zero octave value provided for a rest note. Octave value ignored.\r\noctave: " + octave);
 		}
 		

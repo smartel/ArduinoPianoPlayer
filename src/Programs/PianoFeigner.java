@@ -3,7 +3,13 @@ package Programs;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.net.URL;
+import java.util.Iterator;
+import java.util.TreeSet;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -61,19 +67,20 @@ public class PianoFeigner extends JFrame {
 	
 	public static void main(String[] args) {
 		// TODO in the future, all of these variables should be read from a properties file / input args. some will need to be converted from string to int / etc
-		int numWhiteKeys = 45; 
-		int numBlackKeys = 31; 
-		String firstNote = Constants.E_NOTE;
+		int numWhiteKeys = 45;
+		int numBlackKeys = 31;
+		String firstNote = Constants.NOTE_E;
 		int firstOctave = 1;
-		boolean showLetters = true;
+		String pianoVoice = Constants.VOICE_ORGEL;
+		boolean showLetters = false; // seems like the gui hangs when set to true? can't exit out of the program by clicking the [X] exit button anymore. TODO look into..?
 		// TODO should we have a "default" properties file? or default values here if no properties file is found?
 		
 		// TODO going to use my piano as the basis here:
 		// 76 total keys
 		// 45 white
 		// 31 black
-		// Starts on a(n): E
-		// Ends on a(n): G
+		// Starts on a(n): E (so, would we call this a compareValue of 5? 5th note in 1st octave, 5*1 = 5 cv)
+		// Ends on a(n): G (so, would we call this a compareValue of 7 * 7? 7th note, in the 7th octave, 7*7 = 49 cv)
 		// TODO what's the maximum we'd ever need to be able to handle? 88 keys?
 		// Note: The assumption is made, from all pianos I've ever seen in my life, that the first and last keys of any given piano are always white keys.
 		
@@ -86,22 +93,50 @@ public class PianoFeigner extends JFrame {
 		// TODO THESE ARE TEMPORARILY HARDCODED HIT NOTES, FOR TESTING HOW NOTES THAT ARE STRUCK WILL BE DISPLAYED:
 		MusicSlice slice = new MusicSlice();
 		MusicNote note = new MusicNote("C", 3, 1, false, false);
-		MusicNote note2 = new MusicNote("D", 4, 1, false, false);
+		MusicNote note2 = new MusicNote("E", 4, 1, false, false);
 		MusicNote note3 = new MusicNote("G", 5, 1, true, false);
 		slice.addMusicNote(note);
 		slice.addMusicNote(note2);
 		slice.addMusicNote(note3);
 		pianoPanel.setHitNotes(slice);
-		
-		
+
+		// every time we repaint the piano gui with new notes, play the sounds too
+		pf.playSoundsForSlice(slice, pianoVoice);
+				
 		// we'll have slight buffer space in the ui
-		pf.setSize(Constants.WHITE_KEY_WIDTH * (numWhiteKeys + 1), Constants.WHITE_KEY_HEIGHT + 45);
+		pf.setSize(Constants.KEY_WIDTH_WHITE * (numWhiteKeys + 1), Constants.KEY_HEIGHT_WHITE + 45);
 		pf.setTitle("Piano Feigner");
 		pf.setLocationRelativeTo(null);
 		pf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		pf.setVisible(true);
 	}
 	
+	public void playSoundsForSlice(MusicSlice slice, String pianoVoice) {
+
+		double compareValue = -1;
+		TreeSet<MusicNote> notes = slice.getNotes();
+		Iterator<MusicNote> iter = notes.iterator();
+		
+		while (iter.hasNext()) {
+			MusicNote note = iter.next();
+			compareValue = note.getCompareValue();
+			System.out.println("This note's compareValue is: " + compareValue); // TODO delete, just testing. for ensuring our odd / even .wav test implemention is working.
+			if (compareValue > 0) {
+				try {
+					String uri = NoteUtils.getSoundWavForNote(compareValue, pianoVoice);
+					URL url = getClass().getClassLoader().getResource(uri);
+					AudioInputStream audioIn = AudioSystem.getAudioInputStream(url);
+					Clip clip = AudioSystem.getClip();
+					clip.open(audioIn);
+					clip.start();
+					//clip.loop(Clip.LOOP_CONTINUOUSLY); Do not do this :)
+				} catch (Exception e) {
+					System.out.println("PianoFeigner#main - exception caught attempting to test playing .wav files: " + e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 }
 
 class PianoPanel extends JPanel {
@@ -177,7 +212,7 @@ class PianoPanel extends JPanel {
 		// draw the white keys
 		
 		for (int i = 0; i < numWhiteKeys; ++i) {
-			startX = Constants.WHITE_KEY_WIDTH * i;
+			startX = Constants.KEY_WIDTH_WHITE * i;
 
 			// Determine the compare value of this key, so we can check if it is being struck currently.
 			// Get the note letter we are on by checking where we are in the ABCDEFG pattern
@@ -187,14 +222,14 @@ class PianoPanel extends JPanel {
 			// we'll fill in the color for the key, and then draw a rectangle over it to give it a border
 			// if this is a note that is being struck, color it with the struck-color
 			if (currentSlice.containsNote(currentCompVal)) {
-				gra.setColor(Constants.HIT_KEY_COLOR);
-				gra.fillRect(startX, startY, Constants.WHITE_KEY_WIDTH, Constants.WHITE_KEY_HEIGHT);
+				gra.setColor(Constants.KEY_COLOR_HIT);
+				gra.fillRect(startX, startY, Constants.KEY_WIDTH_WHITE, Constants.KEY_HEIGHT_WHITE);
 			} else {
-				gra.setColor(Constants.WHITE_KEY_COLOR);
-				gra.fillRect(startX, startY, Constants.WHITE_KEY_WIDTH, Constants.WHITE_KEY_HEIGHT);
+				gra.setColor(Constants.KEY_COLOR_WHITE);
+				gra.fillRect(startX, startY, Constants.KEY_WIDTH_WHITE, Constants.KEY_HEIGHT_WHITE);
 			}
-			gra.setColor(Constants.KEY_BORDER_COLOR);
-			gra.drawRect(startX, startY, Constants.WHITE_KEY_WIDTH, Constants.WHITE_KEY_HEIGHT);
+			gra.setColor(Constants.KEY_COLOR_BORDER);
+			gra.drawRect(startX, startY, Constants.KEY_WIDTH_WHITE, Constants.KEY_HEIGHT_WHITE);
 			
 			if (showLetters) {
 				JLabel letterLabel = new JLabel(displayLetter);
@@ -229,12 +264,12 @@ class PianoPanel extends JPanel {
 		// (init with one skip) skip place skip place skip skip skip place skip place skip place skip skip (repeat)
 		
 		// Init: skip 1/3rd in
-		walker = 0 + (Constants.WHITE_KEY_WIDTH / 3);
+		walker = 0 + (Constants.KEY_WIDTH_WHITE / 3);
 		patternPosition = NoteUtils.getPositionForNote(firstKey);
 		currentOctave = firstOctave;
 		for (int i = 0; i < numBlackKeys; ++i) {
 			// no matter what, skip over the "middle" of the white key
-			walker += (Constants.WHITE_KEY_WIDTH / 3);
+			walker += (Constants.KEY_WIDTH_WHITE / 3);
 			
 			// A,C,D,F,G have sharps, so we need a black key here, which takes up 2/3 the space of a white key, half inside this white key, and half inside the next
 			if (patternPosition == (int)Constants.A_POS || patternPosition == (int)Constants.C_POS || patternPosition == (int)Constants.D_POS ||
@@ -245,19 +280,19 @@ class PianoPanel extends JPanel {
 				String displayLetter = NoteUtils.getNoteForPosition(patternPosition);
 				double currentCompVal = NoteUtils.generateCompareValue(displayLetter, currentOctave, true, false);
 				if (currentSlice.containsNote(currentCompVal)) {
-					gra.setColor(Constants.HIT_KEY_COLOR);
+					gra.setColor(Constants.KEY_COLOR_HIT);
 				} else {
-					gra.setColor(Constants.BLACK_KEY_COLOR);
+					gra.setColor(Constants.KEY_COLOR_BLACK);
 				}
 				startX = walker;
-				gra.fillRect(startX, startY, Constants.BLACK_KEY_WIDTH, Constants.BLACK_KEY_HEIGHT);
-				gra.setColor(Constants.KEY_BORDER_COLOR);
-				gra.drawRect(startX, startY, Constants.BLACK_KEY_WIDTH, Constants.BLACK_KEY_HEIGHT);
+				gra.fillRect(startX, startY, Constants.KEY_WIDTH_BLACK, Constants.KEY_HEIGHT_BLACK);
+				gra.setColor(Constants.KEY_COLOR_BORDER);
+				gra.drawRect(startX, startY, Constants.KEY_WIDTH_BLACK, Constants.KEY_HEIGHT_BLACK);
 				
 				// move to the next position
-				walker += Constants.BLACK_KEY_WIDTH;
+				walker += Constants.KEY_WIDTH_BLACK;
 			} else { //if (patternPosition == (int)Constants.B_POS || patternPosition == (int)Constants.E_POS) { // B, E do not have sharps, so no black key here, skip over the next 2/3rds
-				walker += Constants.BLACK_KEY_WIDTH;
+				walker += Constants.KEY_WIDTH_BLACK;
 				--i;
 			}
 			

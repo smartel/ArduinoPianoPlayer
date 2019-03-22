@@ -60,4 +60,12 @@ public class MusicSlice {
 		return doesContain;
 	}
 	
+	/**
+	 * Getter for notes collection
+	 * @return notes collection
+	 */
+	public TreeSet<MusicNote> getNotes() {
+		return notes;
+	}
+	
 }

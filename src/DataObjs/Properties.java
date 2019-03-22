@@ -12,6 +12,8 @@ public class Properties {
 		// WHAT IS THE FIRST KEY ON THE LEFT? For example, mine starts on E, so an A-D on the first octave wouldn't be possible on my piano.
 		// I guess we should ask what the last key is too. For example, mine ends on a G.
 	
+		// Voice (for PianoFeigner use only)
+	
 	// This file will also contain arduino properties (such as how many fingers there are)
 	
 	// I don't think these properties need to be broken up into 2 separate files (one for piano, one for arduino), since they are both strongly hardcoded to one specific user's environment,

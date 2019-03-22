@@ -244,63 +244,63 @@ public class NoteUtilsTests {
 	
 	@Test
 	public void testOctaveZeroOnRest() {
-		double compVal = NoteUtils.generateCompareValue(Constants.REST_NOTE, 0, false, false);
+		double compVal = NoteUtils.generateCompareValue(Constants.NOTE_REST, 0, false, false);
 		boolean validCompVal = compVal == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testOctaveZeroOnRestAndFlat() {
-		double compVal = NoteUtils.generateCompareValue(Constants.REST_NOTE, 0, false, true);
+		double compVal = NoteUtils.generateCompareValue(Constants.NOTE_REST, 0, false, true);
 		boolean validCompVal = compVal == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testOctaveZeroOnRestAndSharp() {
-		double compVal = NoteUtils.generateCompareValue(Constants.REST_NOTE, 0, true, false);
+		double compVal = NoteUtils.generateCompareValue(Constants.NOTE_REST, 0, true, false);
 		boolean validCompVal = compVal == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testOctaveZeroOnRestAndFlatSharp() {
-		double compVal = NoteUtils.generateCompareValue(Constants.REST_NOTE, 0, true, true);
+		double compVal = NoteUtils.generateCompareValue(Constants.NOTE_REST, 0, true, true);
 		boolean validCompVal = compVal == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testOctaveNonZeroOnRest() {
-		double compVal = NoteUtils.generateCompareValue(Constants.REST_NOTE, 1, false, false);
+		double compVal = NoteUtils.generateCompareValue(Constants.NOTE_REST, 1, false, false);
 		boolean validCompVal = compVal == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testOctaveNonZeroOnRestFlat() {
-		double compVal = NoteUtils.generateCompareValue(Constants.REST_NOTE, 1, false, true);
+		double compVal = NoteUtils.generateCompareValue(Constants.NOTE_REST, 1, false, true);
 		boolean validCompVal = compVal == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testOctaveNonZeroOnRestSharp() {
-		double compVal = NoteUtils.generateCompareValue(Constants.REST_NOTE, 1, true, false);
+		double compVal = NoteUtils.generateCompareValue(Constants.NOTE_REST, 1, true, false);
 		boolean validCompVal = compVal == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testNegativeOctaveOnRestFlatSharp() {
-		double compVal = NoteUtils.generateCompareValue(Constants.REST_NOTE, -1, true, true);
+		double compVal = NoteUtils.generateCompareValue(Constants.NOTE_REST, -1, true, true);
 		boolean validCompVal = compVal == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testNegativeOctaveOnRest() {
-		double compVal = NoteUtils.generateCompareValue(Constants.REST_NOTE, -1, false, false);
+		double compVal = NoteUtils.generateCompareValue(Constants.NOTE_REST, -1, false, false);
 		boolean validCompVal = compVal == 0;
 		assertTrue(validCompVal);
 	}
@@ -310,43 +310,43 @@ public class NoteUtilsTests {
 	@Test
 	public void testGetNoteForPosition1() {
 		String val = NoteUtils.getNoteForPosition(1);
-		assertTrue(val.equalsIgnoreCase(Constants.A_NOTE));
+		assertTrue(val.equalsIgnoreCase(Constants.NOTE_A));
 	}
 
 	@Test
 	public void testGetNoteForPosition2() {
 		String val = NoteUtils.getNoteForPosition(2);
-		assertTrue(val.equalsIgnoreCase(Constants.B_NOTE));
+		assertTrue(val.equalsIgnoreCase(Constants.NOTE_B));
 	}
 	
 	@Test
 	public void testGetNoteForPosition3() {
 		String val = NoteUtils.getNoteForPosition(3);
-		assertTrue(val.equalsIgnoreCase(Constants.C_NOTE));
+		assertTrue(val.equalsIgnoreCase(Constants.NOTE_C));
 	}
 	
 	@Test
 	public void testGetNoteForPosition4() {
 		String val = NoteUtils.getNoteForPosition(4);
-		assertTrue(val.equalsIgnoreCase(Constants.D_NOTE));
+		assertTrue(val.equalsIgnoreCase(Constants.NOTE_D));
 	}
 	
 	@Test
 	public void testGetNoteForPosition5() {
 		String val = NoteUtils.getNoteForPosition(5);
-		assertTrue(val.equalsIgnoreCase(Constants.E_NOTE));
+		assertTrue(val.equalsIgnoreCase(Constants.NOTE_E));
 	}
 	
 	@Test
 	public void testGetNoteForPosition6() {
 		String val = NoteUtils.getNoteForPosition(6);
-		assertTrue(val.equalsIgnoreCase(Constants.F_NOTE));
+		assertTrue(val.equalsIgnoreCase(Constants.NOTE_F));
 	}
 	
 	@Test
 	public void testGetNoteForPosition7() {
 		String val = NoteUtils.getNoteForPosition(7);
-		assertTrue(val.equalsIgnoreCase(Constants.G_NOTE));
+		assertTrue(val.equalsIgnoreCase(Constants.NOTE_G));
 	}
 
 	@Test

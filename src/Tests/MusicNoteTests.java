@@ -276,84 +276,84 @@ public class MusicNoteTests {
 	
 	@Test
 	public void testOctaveZeroOnRestCtor1() {
-		MusicNote note = new MusicNote(Constants.REST_NOTE, 0, 1, false, false);
+		MusicNote note = new MusicNote(Constants.NOTE_REST, 0, 1, false, false);
 		boolean validCompVal = note.getCompareValue() == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testOctaveZeroOnRestCtor1Flat() {
-		MusicNote note = new MusicNote(Constants.REST_NOTE, 0, 1, false, true);
+		MusicNote note = new MusicNote(Constants.NOTE_REST, 0, 1, false, true);
 		boolean validCompVal = note.getCompareValue() == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testOctaveZeroOnRestCtor1Sharp() {
-		MusicNote note = new MusicNote(Constants.REST_NOTE, 0, 1, true, false);
+		MusicNote note = new MusicNote(Constants.NOTE_REST, 0, 1, true, false);
 		boolean validCompVal = note.getCompareValue() == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testOctaveZeroOnRestCtor1FlatSharp() {
-		MusicNote note = new MusicNote(Constants.REST_NOTE, 0, 1, true, true);
+		MusicNote note = new MusicNote(Constants.NOTE_REST, 0, 1, true, true);
 		boolean validCompVal = note.getCompareValue() == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testOctaveNonZeroOnRestCtor1() {
-		MusicNote note = new MusicNote(Constants.REST_NOTE, 1, 1, false, false);
+		MusicNote note = new MusicNote(Constants.NOTE_REST, 1, 1, false, false);
 		boolean validCompVal = note.getCompareValue() == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testOctaveNonZeroOnRestCtor1Flat() {
-		MusicNote note = new MusicNote(Constants.REST_NOTE, 1, 1, false, true);
+		MusicNote note = new MusicNote(Constants.NOTE_REST, 1, 1, false, true);
 		boolean validCompVal = note.getCompareValue() == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testOctaveNonZeroOnRestCtor1Sharp() {
-		MusicNote note = new MusicNote(Constants.REST_NOTE, 1, 1, true, false);
+		MusicNote note = new MusicNote(Constants.NOTE_REST, 1, 1, true, false);
 		boolean validCompVal = note.getCompareValue() == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testNegativeOctaveOnRestCtor1FlatSharp() {
-		MusicNote note = new MusicNote(Constants.REST_NOTE, -1, 1, true, true);
+		MusicNote note = new MusicNote(Constants.NOTE_REST, -1, 1, true, true);
 		boolean validCompVal = note.getCompareValue() == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testNegativeOctaveOnRestCtor1() {
-		MusicNote note = new MusicNote(Constants.REST_NOTE, -1, 1, false, false);
+		MusicNote note = new MusicNote(Constants.NOTE_REST, -1, 1, false, false);
 		boolean validCompVal = note.getCompareValue() == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testOctaveZeroOnRestCtor2() {
-		MusicNote note = new MusicNote(Constants.REST_NOTE, 0, 1);
+		MusicNote note = new MusicNote(Constants.NOTE_REST, 0, 1);
 		boolean validCompVal = note.getCompareValue() == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testOctaveNonZeroOnRestCtor2() {
-		MusicNote note = new MusicNote(Constants.REST_NOTE, 1, 1);
+		MusicNote note = new MusicNote(Constants.NOTE_REST, 1, 1);
 		boolean validCompVal = note.getCompareValue() == 0;
 		assertTrue(validCompVal);
 	}
 
 	@Test
 	public void testNegativeOctaveOnRestCtor2() {
-		MusicNote note = new MusicNote(Constants.REST_NOTE, -1, 1);
+		MusicNote note = new MusicNote(Constants.NOTE_REST, -1, 1);
 		boolean validCompVal = note.getCompareValue() == 0;
 		assertTrue(validCompVal);
 	}

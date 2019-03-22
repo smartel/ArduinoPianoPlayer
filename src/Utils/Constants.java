@@ -40,14 +40,14 @@ public class Constants {
 	final public static int OCTAVE_LENGTH = 7;
 	
 	// string representations of each note
-	final public static String A_NOTE = "A";
-	final public static String B_NOTE = "B";
-	final public static String C_NOTE = "C";
-	final public static String D_NOTE = "D";
-	final public static String E_NOTE = "E";
-	final public static String F_NOTE = "F";
-	final public static String G_NOTE = "G";
-	final public static String REST_NOTE = "REST";
+	final public static String NOTE_A = "A";
+	final public static String NOTE_B = "B";
+	final public static String NOTE_C = "C";
+	final public static String NOTE_D = "D";
+	final public static String NOTE_E = "E";
+	final public static String NOTE_F = "F";
+	final public static String NOTE_G = "G";
+	final public static String NOTE_REST = "REST";
 	
 	// Standard values when dealing with Rest notes (which don't have an octave, alter, ...)
 	final public static double REST_COMP_VALUE = 0; // A rest note has a compare value of 0.0, as it has no step, no octave, no alter, ...
@@ -55,18 +55,22 @@ public class Constants {
 	final public static double REST_ALTER_VALUE = 0;
 	
 	// Piano Feigner (gui) key sizes
-	final public static int WHITE_KEY_WIDTH = 27;
-	final public static int WHITE_KEY_HEIGHT = 170;
-	final public static int BLACK_KEY_WIDTH = 18;
-	final public static int BLACK_KEY_HEIGHT = 125;
+	final public static int KEY_WIDTH_WHITE = 27;
+	final public static int KEY_HEIGHT_WHITE = 170;
+	final public static int KEY_WIDTH_BLACK = 18;
+	final public static int KEY_HEIGHT_BLACK = 125;
 	// Various magic numbers for spacing within the piano gui
-	final public static int LETTER_X_BUFFER = (WHITE_KEY_WIDTH / 2) - 2;
-	final public static int LETTER_Y_BUFFER = WHITE_KEY_HEIGHT - 30;
+	final public static int LETTER_X_BUFFER = (KEY_WIDTH_WHITE / 2) - 2;
+	final public static int LETTER_Y_BUFFER = KEY_HEIGHT_WHITE - 30;
 	final public static int LETTER_HEIGHT = 30;
 	final public static int LETTER_WIDTH = 30;
 	// colors
-	final public static Color WHITE_KEY_COLOR = Color.WHITE;
-	final public static Color KEY_BORDER_COLOR = Color.BLACK;
-	final public static Color BLACK_KEY_COLOR = Color.BLACK;
-	final public static Color HIT_KEY_COLOR = Color.YELLOW;
+	final public static Color KEY_COLOR_WHITE = Color.WHITE;
+	final public static Color KEY_COLOR_BORDER = Color.BLACK;
+	final public static Color KEY_COLOR_BLACK = Color.BLACK;
+	final public static Color KEY_COLOR_HIT = Color.YELLOW;
+	
+	// implemented voices for the PianoFeigner (determines which .wav files are picked up for compareValues)
+	final public static String VOICE_PIANO = "PIANO";
+	final public static String VOICE_ORGEL = "ORGEL";
 }

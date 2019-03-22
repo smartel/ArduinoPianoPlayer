@@ -40,21 +40,21 @@ public class NoteUtils {
 
 		// individual note lookup
 		
-		if (note.equalsIgnoreCase(Constants.A_NOTE)) {
+		if (note.equalsIgnoreCase(Constants.NOTE_A)) {
 			value += Constants.A_POS;
-		} else if (note.equalsIgnoreCase(Constants.B_NOTE)) {
+		} else if (note.equalsIgnoreCase(Constants.NOTE_B)) {
 			value += Constants.B_POS;
-		} else if (note.equalsIgnoreCase(Constants.C_NOTE)) {
+		} else if (note.equalsIgnoreCase(Constants.NOTE_C)) {
 			value += Constants.C_POS;
-		} else if (note.equalsIgnoreCase(Constants.D_NOTE)) {
+		} else if (note.equalsIgnoreCase(Constants.NOTE_D)) {
 			value += Constants.D_POS;
-		} else if (note.equalsIgnoreCase(Constants.E_NOTE)) {
+		} else if (note.equalsIgnoreCase(Constants.NOTE_E)) {
 			value += Constants.E_POS;
-		} else if (note.equalsIgnoreCase(Constants.F_NOTE)) {
+		} else if (note.equalsIgnoreCase(Constants.NOTE_F)) {
 			value += Constants.F_POS;
-		} else if (note.equalsIgnoreCase(Constants.G_NOTE)) {
+		} else if (note.equalsIgnoreCase(Constants.NOTE_G)) {
 			value += Constants.G_POS;
-		} else if (note.equalsIgnoreCase(Constants.REST_NOTE)) {
+		} else if (note.equalsIgnoreCase(Constants.NOTE_REST)) {
 			// We have a hardcoded value for rest notes - a compare value of 0.
 			value = Constants.REST_COMP_VALUE;
 		} else {
@@ -66,7 +66,7 @@ public class NoteUtils {
 		// but if the value is already 0 (a rest note) or -1 (already failed), don't bother checking and potentially overwriting the current value.
 		if (isSharp && isFlat) {
 			// although, if it is a rest note, we only need to warn
-			if (note.equalsIgnoreCase(Constants.REST_NOTE)) {
+			if (note.equalsIgnoreCase(Constants.NOTE_REST)) {
 				System.out.println("NoteUtils#generateCompareValue - warning - isSharp and isFlat both set to true, but on a rest note, so initialization will continue.\r\nConfirmation - isSharp: " + isSharp + ", isFlat: " + isFlat + ", note: " + note);
 			} else {
 				System.out.println("NoteUtils#generateCompareValue - failed to generate compare value - isSharp and isFlat both set to true.\r\nConfirmation - isSharp: " + isSharp + ", isFlat: " + isFlat);
@@ -79,12 +79,12 @@ public class NoteUtils {
 		}
 		
 		// octave adjustment - only needs to confirm the octave is non-zero / non-negative. it can accurately create a compareValue for an octave no matter how high it is.
-		if (octave <= 0 && (!note.equalsIgnoreCase(Constants.REST_NOTE))) {
+		if (octave <= 0 && (!note.equalsIgnoreCase(Constants.NOTE_REST))) {
 			System.out.println("NoteUtils#generateCompareValue - failed to generate compare value - invalid octave value (0 or negative).\r\noctave: " + octave);
 			return -1;
 		}
 		// Ensure the octave is zero if it is a rest note, but if it isn't, we only need to provide a warning, and can keep initializing
-		if (octave != 0 && (note.equalsIgnoreCase(Constants.REST_NOTE))) {
+		if (octave != 0 && (note.equalsIgnoreCase(Constants.NOTE_REST))) {
 			System.out.println("NoteUtils#generateCompareValue - warning - non-zero octave value provided for a rest note. Octave value ignored.\r\noctave: " + octave);
 		}
 		
@@ -103,19 +103,19 @@ public class NoteUtils {
 	public static int getPositionForNote(String note) {
 		int value = -1;
 		
-		if (note.equalsIgnoreCase(Constants.A_NOTE)) {
+		if (note.equalsIgnoreCase(Constants.NOTE_A)) {
 			value = (int)Constants.A_POS;
-		} else if (note.equalsIgnoreCase(Constants.B_NOTE)) {
+		} else if (note.equalsIgnoreCase(Constants.NOTE_B)) {
 			value = (int)Constants.B_POS;
-		} else if (note.equalsIgnoreCase(Constants.C_NOTE)) {
+		} else if (note.equalsIgnoreCase(Constants.NOTE_C)) {
 			value = (int)Constants.C_POS;
-		} else if (note.equalsIgnoreCase(Constants.D_NOTE)) {
+		} else if (note.equalsIgnoreCase(Constants.NOTE_D)) {
 			value = (int)Constants.D_POS;
-		} else if (note.equalsIgnoreCase(Constants.E_NOTE)) {
+		} else if (note.equalsIgnoreCase(Constants.NOTE_E)) {
 			value = (int)Constants.E_POS;
-		} else if (note.equalsIgnoreCase(Constants.F_NOTE)) {
+		} else if (note.equalsIgnoreCase(Constants.NOTE_F)) {
 			value = (int)Constants.F_POS;
-		} else if (note.equalsIgnoreCase(Constants.G_NOTE)) {
+		} else if (note.equalsIgnoreCase(Constants.NOTE_G)) {
 			value = (int)Constants.G_POS;
 		} else {
 			System.out.println("NoteUtils#getPositionForNote - error - invalid note value passed in, position can't be determined. note: " + note);
@@ -134,24 +134,69 @@ public class NoteUtils {
 		String value = "";
 		
 		if (position == 1) {
-			value = Constants.A_NOTE;
+			value = Constants.NOTE_A;
 		} else if (position == 2) {
-			value = Constants.B_NOTE;
+			value = Constants.NOTE_B;
 		} else if (position == 3) {
-			value = Constants.C_NOTE;
+			value = Constants.NOTE_C;
 		} else if (position == 4) {
-			value = Constants.D_NOTE;
+			value = Constants.NOTE_D;
 		} else if (position == 5) {
-			value = Constants.E_NOTE;
+			value = Constants.NOTE_E;
 		} else if (position == 6) {
-			value = Constants.F_NOTE;
+			value = Constants.NOTE_F;
 		} else if (position == 7) {
-			value = Constants.G_NOTE;
+			value = Constants.NOTE_G;
 		} else {
 			System.out.println("NoteUtils#getNoteForPosition - error - invalid position value passed in, note letter can't be determined. position: " + position);
 		}
 		
 		return value;
+	}
+	
+	/**
+	 * Given the compareValue for a specific note, as well as which piano voice / instrument to use,
+	 * this will returns the uri of the appropriate .wav file to play the note (for use with the Feigner)
+	 * 
+	 * @param compareValue the piano key to find the sound file for
+	 * @param voice the instrument or "voice" (ie piano, orgel, harpsichord, ...) to play the note with. See Constants.java for a list of implemented voices.
+	 * @return uri of the .wav file containing that piano key's sound
+	 */
+	public static String getSoundWavForNote(double compareValue, String voice) {
+		String uri = "";
+		boolean valid = true;
+		
+		if (!voice.equalsIgnoreCase(Constants.VOICE_ORGEL) && !voice.equalsIgnoreCase(Constants.VOICE_PIANO)) {
+			System.out.println("NoteUrils#getSoundWavForNote - error - invalid voice supplied: " + voice);
+			valid = false;
+		}
+		
+		// compareValue range checking
+		if (compareValue == 0) {
+			System.out.println("NoteUrils#getSoundWavForNote - error - invalid compare value given: 0. Was this accidentally called for a Rest note? Confirmation - compareValue: " + compareValue);
+		}
+		// TODO use piano properties instead to get min / max compare value for range checking. For now, just erroring out if larger than 88
+		
+		
+		if (valid && voice.equalsIgnoreCase(Constants.VOICE_ORGEL)) {
+			// TODO temp implementation. for now, simply returning test files based on whether it is an even or odd compareValue
+			if (compareValue % 2 == 0) {
+				uri = "hoo.wav";
+			} else {
+				uri = "ko.wav";
+			}
+		} else if (valid && voice.equalsIgnoreCase(Constants.VOICE_PIANO)) {
+			// TODO temp implementation. for now, simply returning test files based on whether it is an even or odd compareValue
+			if (compareValue % 2 == 0) {
+				uri = "hoo.wav";
+			} else {
+				uri = "ko.wav";
+			}
+		}
+		
+		// TODO reminder to self to delete those test .wav files once we have the real voice wavs.
+		
+		return uri;
 	}
 	
 }
