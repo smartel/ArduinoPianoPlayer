@@ -373,4 +373,149 @@ public class NoteUtilsTests {
 		assertTrue(val.equalsIgnoreCase(""));
 	}
 	
+	
+	
+	// getNextNoteCV tests
+
+	@Test
+	public void testGetNextNoteCV1() { // A
+		double val = NoteUtils.getNextNoteCV(1);
+		assertTrue(val == 1.5);
+	}
+
+	public void testGetNextNoteCV1Point5() { // A sharp aka G flat
+		double val = NoteUtils.getNextNoteCV(1.5);
+		assertTrue(val == 2);
+	}
+
+	@Test
+	public void testGetNextNoteCV2() { // B
+		double val = NoteUtils.getNextNoteCV(2);
+		assertTrue(val == 3);
+	}
+
+	@Test
+	public void testGetNextNoteCV3() { // C
+		double val = NoteUtils.getNextNoteCV(3);
+		assertTrue(val == 3.5);
+	}
+
+	public void testGetNextNoteCV3Point5() { // C sharp aka D flat
+		double val = NoteUtils.getNextNoteCV(3.5);
+		assertTrue(val == 4);
+	}
+
+	@Test
+	public void testGetNextNoteCV4() { // D
+		double val = NoteUtils.getNextNoteCV(4);
+		assertTrue(val == 4.5);
+	}
+	
+	public void testGetNextNoteCV4Point5() { // D sharp aka E flat
+		double val = NoteUtils.getNextNoteCV(4.5);
+		assertTrue(val == 5);
+	}
+
+	@Test
+	public void testGetNextNoteCV5() { // E
+		double val = NoteUtils.getNextNoteCV(5);
+		assertTrue(val == 6);
+	}
+
+	@Test
+	public void testGetNextNoteCV6() { // F
+		double val = NoteUtils.getNextNoteCV(6);
+		assertTrue(val == 6.5);
+	}
+
+	public void testGetNextNoteCV6Point5() { // F sharp aka G flat
+		double val = NoteUtils.getNextNoteCV(6.5);
+		assertTrue(val == 7);
+	}
+
+	@Test
+	public void testGetNextNoteCV7() { // G
+		double val = NoteUtils.getNextNoteCV(7);
+		assertTrue(val == 7.5);
+	}
+
+	public void testGetNextNoteCV7Point5() { // G sharp aka A flat
+		double val = NoteUtils.getNextNoteCV(7.5);
+		assertTrue(val == 8);
+	}
+
+	@Test
+	public void testGetNextNoteCV8() { // A on 2nd octave
+		double val = NoteUtils.getNextNoteCV(8);
+		assertTrue(val == 8.5);
+	}
+
+	@Test
+	public void testGetNextNoteCV8Point5() { // A sharp aka G flat on 2nd octave
+		double val = NoteUtils.getNextNoteCV(8.5);
+		assertTrue(val == 9);
+	}
+
+	@Test
+	public void testGetNextNoteCV15() { // A on higher octave
+		double val = NoteUtils.getNextNoteCV(15);
+		assertTrue(val == 15.5);
+	}
+
+	@Test
+	public void testGetNextNoteCV15Point5() { // A sharp aka G flat on higher octave
+		double val = NoteUtils.getNextNoteCV(15.5);
+		assertTrue(val == 16);
+	}
+	
+	@Test
+	public void testGetNextNoteCV22() { // A on even higher octave
+		double val = NoteUtils.getNextNoteCV(22);
+		assertTrue(val == 22.5);
+	}
+	
+	@Test
+	public void testGetNextNoteCV22Point5() { // A sharp aka G flat on even higher octave
+		double val = NoteUtils.getNextNoteCV(22.5);
+		assertTrue(val == 23);
+	}
+	
+	@Test
+	public void testGetNextNoteCV30() { // B meaning even higher octave + 1 note
+		double val = NoteUtils.getNextNoteCV(30);
+		assertTrue(val == 31);
+	}
+	
+	@Test
+	public void testGetNextNoteCV33() { // E meaning even higher octave + a few notes, just making sure E's not-having-a-sharp is fine
+		double val = NoteUtils.getNextNoteCV(33);
+		assertTrue(val == 34);
+	}
+	
+	@Test
+	public void testGetNextNoteCV34() { // F meaning even higher octave + a few more notes, just making sure F having-a-sharp is fine
+		double val = NoteUtils.getNextNoteCV(34);
+		assertTrue(val == 34.5);
+	}
+	
+	@Test
+	public void testGetNextNoteCV35Point5() { // G sharp aka A flat on a super high octave
+		double val = NoteUtils.getNextNoteCV(35.5);
+		assertTrue(val == 36);
+	}
+	
+	@Test
+	public void testGetNextNoteCVZero() { // 0, so it should be invalid
+		double val = NoteUtils.getNextNoteCV(0);
+		assertTrue(val == -1);
+	}
+	
+	@Test
+	public void testGetNextNoteCVNegative() { // negative, so it should be invalid
+		double val = NoteUtils.getNextNoteCV(-10);
+		assertTrue(val == -1);
+	}
+	
+	
+	
 }

@@ -73,4 +73,45 @@ public class Constants {
 	// implemented voices for the PianoFeigner (determines which .wav files are picked up for compareValues)
 	final public static String VOICE_PIANO = "PIANO";
 	final public static String VOICE_ORGEL = "ORGEL";
+	
+
+	// Assumed max number of keys there will be on a physical piano
+	final public static int MAX_PIANO_KEYS = 88;
+	// Assumed max octave value that will be on a physical piano
+	final public static int MAX_PIANO_OCTAVE = 8;
+	
+	// Properties-file settings:
+	 // the number of fields that are expected in a Properties file. If the count doesn't match at runtime, we'll throw an error.
+	public static final int SETTINGS_EXPECTED_COUNT = 7;
+	
+	// Properties-file settings that are READ FROM THE FILE
+	// Total number of keys (the assumption is made that the first key and last key will both be white keys)
+	public static final String SETTINGS_TOTAL_NUM_KEYS = "TOTAL_NUM_KEYS";
+	// first note (leftmost key on the physical piano - assumed to be a white key)
+	public static final String SETTINGS_FIRST_NOTE = "FIRST_NOTE";
+	// first octave (which octave the leftmost key on the piano is in)
+	public static final String SETTINGS_FIRST_OCTAVE = "FIRST_OCTAVE";
+	// voice (which voice to use for the PianoFeigner)
+	public static final String SETTINGS_VOICE = "VOICE";
+	// number of sliding fingers available for playing songs
+	public static final String SETTINGS_NUM_SLIDING_FINGERS = "NUM_SLIDING_FINGERS";
+	// number of static fingers available for playing songs (expected to be 0 if there are sliding fingers, or a 1:1 ratio with total number of keys if there are no sliding fingers)
+	public static final String SETTINGS_NUM_STATIC_FINGERS = "NUM_STATIC_FINGERS";
+	// flag for whether or not to display letters in the PianoFeigner gui. If 1, letters will be displayed on the gui's piano keys. Any other value will show no letters.
+	public static final String SETTINGS_DISPLAY_LETTERS = "DISPLAY_PIANO_LETTERS";
+
+	// Properties-file settings that are DETERMINED FROM READ VALUES
+	// minimum compare value possible on the piano (Determined from first key and first octave)
+	public static final String SETTINGS_MIN_COMP_VALUE = "MIN_COMPARE_VALUE";
+	// max compare value (Determined from first key and first octave)
+	public static final String SETTINGS_MAX_COMP_VALUE = "MAX_COMPARE_VALUE";
+	// how many white keys (determined from total)
+	public static final String SETTINGS_NUM_WHITE_KEYS = "NUM_WHITE_KEYS";
+	// how many black keys (determined from total)
+	public static final String SETTINGS_NUM_BLACK_KEYS = "NUM_BLACK_KEYS";
+	// last note (determined from total)
+	public static final String SETTINGS_LAST_NOTE = "LAST_NOTE";
+	// last octave (determined from total)
+	public static final String SETTINGS_LAST_OCTAVE = "LAST_OCTAVE";
+	
 }

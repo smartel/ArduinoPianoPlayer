@@ -1,5 +1,7 @@
 package Utils;
 
+import DataObjs.PianoProperties;
+
 public class NoteUtils {
 
 	
@@ -162,9 +164,11 @@ public class NoteUtils {
 	 * @param voice the instrument or "voice" (ie piano, orgel, harpsichord, ...) to play the note with. See Constants.java for a list of implemented voices.
 	 * @return uri of the .wav file containing that piano key's sound
 	 */
-	public static String getSoundWavForNote(double compareValue, String voice) {
+	public static String getSoundWavForNote(double compareValue, String voice, PianoProperties properties) {
 		String uri = "";
 		boolean valid = true;
+		double compMin = Double.parseDouble(properties.getSetting(Constants.SETTINGS_MIN_COMP_VALUE));
+		double compMax = Double.parseDouble(properties.getSetting(Constants.SETTINGS_MAX_COMP_VALUE));
 		
 		if (!voice.equalsIgnoreCase(Constants.VOICE_ORGEL) && !voice.equalsIgnoreCase(Constants.VOICE_PIANO)) {
 			System.out.println("NoteUrils#getSoundWavForNote - error - invalid voice supplied: " + voice);
@@ -175,7 +179,11 @@ public class NoteUtils {
 		if (compareValue == 0) {
 			System.out.println("NoteUrils#getSoundWavForNote - error - invalid compare value given: 0. Was this accidentally called for a Rest note? Confirmation - compareValue: " + compareValue);
 		}
-		// TODO use piano properties instead to get min / max compare value for range checking. For now, just erroring out if larger than 88
+		// use piano properties to get min / max compare value for range checking.
+		if ( (compareValue < compMin) ||
+			 (compareValue > compMax) ) {
+			System.out.println("NoteUrils#getSoundWavForNote - error - invalid compare value supplied: " + compareValue + ". Maximum range via piano properties was between: " + compMin + " and " + compMax + ".");
+		}
 		
 		
 		if (valid && voice.equalsIgnoreCase(Constants.VOICE_ORGEL)) {
@@ -197,6 +205,40 @@ public class NoteUtils {
 		// TODO reminder to self to delete those test .wav files once we have the real voice wavs.
 		
 		return uri;
+	}
+	
+	/**
+	 * Given a compareValue, this will determine the next immediately after it, whether it is a whole note skip or just a sharp
+	 * (so, it determines if 0.5 or if 1.0 needs to be added to the current compare value), and then returns it
+	 * @param compareVal the compareValue of the current note, to generate the next note's value from
+	 * @return the compareValue of the note immediately after the supplied note, or -1 if an invalid compareVal was supplied
+	 */
+	public static double getNextNoteCV(double compareVal) {
+		double nextCompVal = -1;
+		
+		// since generating the compare value simply follows a pattern of seeing what letter note we're on and what the next letter note is,
+		// we don't really need to do bounds checking on the input value other than making sure it isn't negative / 0
+		if (compareVal <= 0) {
+			System.out.println("NoteUtils#getNextNoteCV - error - invalid compare value supplied to generate the next note from. Supplied compareVal: " + compareVal);
+		} else {
+			if (compareVal % 1 == 0.5) { // if we are on a sharp, then we know we just need to add 0.5 to get to the next note
+				nextCompVal = compareVal + 0.5;
+			} else {
+				// we know we are not on a sharp/flat, so we're on A,B,C,D,E,F,G. B and E do not have sharps.
+				// narrow it down to one octave, so we solely had the "Note Position within an octave", ie, 1=A, 2=B, ..., 7=G
+				int temp = (int)compareVal;
+				while (temp > 7) {
+					temp -= 7;
+				}
+				if (temp == 2 || temp == 5) { // if B or E, we add one to the given compareValue and return it, since there is no sharp on these two notes
+					nextCompVal = compareVal + 1;
+				} else { // otherwise, it has a sharp
+					nextCompVal = compareVal + 0.5;
+				}
+			}
+		}
+		
+		return nextCompVal;
 	}
 	
 }

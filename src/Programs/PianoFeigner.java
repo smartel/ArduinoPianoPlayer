@@ -1,6 +1,5 @@
 package Programs;
 
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.net.URL;
@@ -16,6 +15,7 @@ import javax.swing.JPanel;
 
 import DataObjs.MusicNote;
 import DataObjs.MusicSlice;
+import DataObjs.PianoProperties;
 import Utils.Constants;
 import Utils.NoteUtils;
 
@@ -65,29 +65,51 @@ import Utils.NoteUtils;
  */
 public class PianoFeigner extends JFrame {
 	
+	PianoProperties properties;
+	
 	public static void main(String[] args) {
-		// TODO in the future, all of these variables should be read from a properties file / input args. some will need to be converted from string to int / etc
-		int numWhiteKeys = 45;
-		int numBlackKeys = 31;
-		String firstNote = Constants.NOTE_E;
-		int firstOctave = 1;
-		String pianoVoice = Constants.VOICE_ORGEL;
-		boolean showLetters = false; // seems like the gui hangs when set to true? can't exit out of the program by clicking the [X] exit button anymore. TODO look into..?
-		// TODO should we have a "default" properties file? or default values here if no properties file is found?
+		String propertiesPath = "";
+
+		if (args.length < 1) {
+			System.out.println("PianoFeigner#main - Please provide a filepath to a Piano Properties file. Gracefully exiting.");
+		} else {
+			propertiesPath = args[0];
+	
+			PianoFeigner pf = new PianoFeigner();
+			pf.properties = new PianoProperties(propertiesPath);
+			
+			if (pf.properties.didLoad()) {
+				System.out.println(pf.properties); // for manual inspection of properties
+				pf.execute();
+			} else {
+				System.out.println("PianoFeigner#main - Please fix the reported errors with the properties file and execute the program again. Gracefully exiting.");
+			}
+		}
+	}
+	
+	public void execute() {
+		boolean showLetters;
+		int numWhiteKeys = Integer.parseInt(properties.getSetting(Constants.SETTINGS_NUM_WHITE_KEYS));
+		int numBlackKeys = Integer.parseInt(properties.getSetting(Constants.SETTINGS_NUM_BLACK_KEYS));
+		String firstNote = properties.getSetting(Constants.SETTINGS_FIRST_NOTE);
+		int firstOctave = Integer.parseInt(properties.getSetting(Constants.SETTINGS_FIRST_OCTAVE));
+		String pianoVoice = properties.getSetting(Constants.SETTINGS_VOICE);
+
+		if (properties.getSetting(Constants.SETTINGS_DISPLAY_LETTERS).equalsIgnoreCase("1")) {
+			showLetters = true;
+			// seems like the gui hangs when set to true? can't exit out of the program by clicking the [X] exit button anymore. TODO look into..?
+		} else {
+			showLetters = false;
+		}
 		
-		// TODO going to use my piano as the basis here:
-		// 76 total keys
-		// 45 white
-		// 31 black
-		// Starts on a(n): E (so, would we call this a compareValue of 5? 5th note in 1st octave, 5*1 = 5 cv)
-		// Ends on a(n): G (so, would we call this a compareValue of 7 * 7? 7th note, in the 7th octave, 7*7 = 49 cv)
-		// TODO what's the maximum we'd ever need to be able to handle? 88 keys?
-		// Note: The assumption is made, from all pianos I've ever seen in my life, that the first and last keys of any given piano are always white keys.
+		// TODO perhaps we should make a radio button for voice, instead of having it in the Settings file?
+		// TODO and perhaps a "Start" button instead of it immediately jumping into playback when you run the application?
+		//      After you hit start, we could then replace the button with a "Pause" button, so hitting it again would stop playback. When it is paused,
+		//      we could then turn the button into a "Restart" button, and hitting it again could restart the playback from the beginning. just some ideas.
+
 		
-		
-		PianoFeigner pf = new PianoFeigner();
 		PianoPanel pianoPanel = new PianoPanel(numWhiteKeys, numBlackKeys, firstNote, firstOctave, showLetters);
-		pf.add(pianoPanel);
+		add(pianoPanel);
 		
 		
 		// TODO THESE ARE TEMPORARILY HARDCODED HIT NOTES, FOR TESTING HOW NOTES THAT ARE STRUCK WILL BE DISPLAYED:
@@ -101,14 +123,14 @@ public class PianoFeigner extends JFrame {
 		pianoPanel.setHitNotes(slice);
 
 		// every time we repaint the piano gui with new notes, play the sounds too
-		pf.playSoundsForSlice(slice, pianoVoice);
+		playSoundsForSlice(slice, pianoVoice);
 				
 		// we'll have slight buffer space in the ui
-		pf.setSize(Constants.KEY_WIDTH_WHITE * (numWhiteKeys + 1), Constants.KEY_HEIGHT_WHITE + 45);
-		pf.setTitle("Piano Feigner");
-		pf.setLocationRelativeTo(null);
-		pf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		pf.setVisible(true);
+		setSize(Constants.KEY_WIDTH_WHITE * (numWhiteKeys + 1), Constants.KEY_HEIGHT_WHITE + 45);
+		setTitle("Piano Feigner");
+		setLocationRelativeTo(null);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setVisible(true);
 	}
 	
 	public void playSoundsForSlice(MusicSlice slice, String pianoVoice) {
@@ -120,18 +142,17 @@ public class PianoFeigner extends JFrame {
 		while (iter.hasNext()) {
 			MusicNote note = iter.next();
 			compareValue = note.getCompareValue();
-			System.out.println("This note's compareValue is: " + compareValue); // TODO delete, just testing. for ensuring our odd / even .wav test implemention is working.
+			System.out.println("PianoFeigner#execute - This note's compareValue is: " + compareValue); // TODO delete in the future, just testing the right .wav's are playing.
 			if (compareValue > 0) {
 				try {
-					String uri = NoteUtils.getSoundWavForNote(compareValue, pianoVoice);
+					String uri = NoteUtils.getSoundWavForNote(compareValue, pianoVoice, properties);
 					URL url = getClass().getClassLoader().getResource(uri);
 					AudioInputStream audioIn = AudioSystem.getAudioInputStream(url);
 					Clip clip = AudioSystem.getClip();
 					clip.open(audioIn);
 					clip.start();
-					//clip.loop(Clip.LOOP_CONTINUOUSLY); Do not do this :)
 				} catch (Exception e) {
-					System.out.println("PianoFeigner#main - exception caught attempting to test playing .wav files: " + e.getMessage());
+					System.out.println("PianoFeigner#execute - exception caught attempting to test playing .wav files: " + e.getMessage());
 					e.printStackTrace();
 				}
 			}

@@ -25,14 +25,14 @@ public class NoteTransposer {
 		//    ? why do we need to know the size of the piano when translating to .alc? the .alc output itself is valid regardless of whether a given piano's range can play it. some other process should check it, like at transpose time (when writing to arduino code for a specific piano). Although that'd still be NoteTransposer.java. Ok.
 		
 		if (args.length < 1) {
-			System.out.println("Please provide a filepath to a music data file (.alc, musicxml) to convert for the arduino player. Gracefully exiting.");
+			System.out.println("NoteTransposer#main - Please provide a filepath to a music data file (.alc, musicxml) to convert for the arduino player. Gracefully exiting.");
 		} else {
 			targetFilePath = args[0];
 			
 			// if the file needs to be translated and an optional output alc filepath wasn't provided, display the path that will be used
 			if (args.length == 1 && (!targetFilePath.contains(".alc"))) {
 				alcFilePath = targetFilePath.replace(".musicxml", ".alc");
-				System.out.println("No optional filepath was provided for the output .alc file. The following path will be used: " + alcFilePath);
+				System.out.println("NoteTransposer#main - No optional filepath was provided for the output .alc file. The following path will be used: " + alcFilePath);
 			} else {
 				// use the provided .alc filepath when writing the output file
 				alcFilePath = args[1];

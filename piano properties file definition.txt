@@ -1,0 +1,36 @@
+The Piano Properties file is in clear text so a user can easily understand what the fields and their values are, so the values can be manipulated.
+
+All fields must be present with valid values, although their order of appearance is unimportant.
+Any missing fields or invalid values will cause the load to fail and execution will halt.
+
+Each field appears on its own line in the form of:
+FIELDNAME OPENSQUAREBRACKET VALUE CLOSESQUAREBRACKET
+Or alternatively read as:
+FIELD_NAME [value]
+
+For example:
+FIRST_NOTE [E]
+This example represents the first note in the physical piano (the key to the farmost left) being an "E"
+
+As of writing, there are currently 7 properties that comprise a properties file.
+All of the properties implemented so far are:
+TOTAL_NUM_KEYS - the total number of keys on the physical piano. Must be greater than 0 and less than or equal to 88. integer.
+FIRST_NOTE - the note letter (A,B,C,D,E,F,G) of the first key on the physical piano. Case insensitive String.
+FIRST_OCTAVE - the octave that the first key on the physical piano belongs on. integer.
+VOICE - the desired voice for sound playback from the PianoFeigner. Implemented voices so far are Piano and Orgel. Case insensitive String.
+NUM_SLIDING_FINGERS - the number of mechanical sliding fingers the arduino is capable of manipulating to play the piano. Expected to be a value greater than or equal to 0.
+NUM_STATIC_FINGERS - the number of non-sliding mechanical fingers the arduino is capable of manipulating to play the piano. Expected to be a value greater than or equal to 0.
+DISPLAY_PIANO_LETTERS - if the value is 1, the PianoFeigner will show letters on the piano keys in the GUI. Any other number will result in no letters being displayed. Integer.
+
+Note that it is valid for the number of sliding fingers AND static fingers to both be set to 0. This could be the case when one is only intending to use the PianoFeigner.
+
+=========================================
+Example properties file (in its entirety)
+piano_properties.txt:
+TOTAL_NUM_KEYS [76]
+FIRST_NOTE [E]
+FIRST_OCTAVE [1]
+VOICE [ORGEL]
+NUM_SLIDING_FINGERS [0]
+NUM_STATIC_FINGERS [0]
+DISPLAY_PIANO_LETTERS [1]
