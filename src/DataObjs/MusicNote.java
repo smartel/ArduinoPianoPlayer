@@ -52,6 +52,35 @@ public class MusicNote implements Comparable<MusicNote> {
 	 * @param isFlat a flag indicating whether the note is a flat. if false, the note is treated as a flat
 	 */
 	public MusicNote(String note, int octave, int duration, boolean isSharp, boolean isFlat) {
+		
+		// TODO should we check if we get a combination such as B sharp, E sharp, C flat, F flat here? and throw in this case?
+		//      it shouldn't be possible, but it could happen as a bug from any of the translators or perhaps from the source music data.
+		//      going to manually promote / demote the note to the appropriate natural note, and leaving these warning messages in to see if it ever does occur.
+		if ( (note.equalsIgnoreCase(Constants.NOTE_B) && isSharp) ||
+			 (note.equalsIgnoreCase(Constants.NOTE_E) && isSharp) ||
+			 (note.equalsIgnoreCase(Constants.NOTE_C) && isFlat) ||
+			 (note.equalsIgnoreCase(Constants.NOTE_F) && isFlat) ) {
+			System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - had a sharp B or sharp E, or a flat C or flat F. Confirm - note: " + note +
+					           ", isSharp: " + isSharp + ", isFlat: " + isFlat);
+			// promote the note to the appropriate natural note (B sharp becomes C natural, E sharp becomes F natural, C flat becomes B natural, F flat becomes E natural)
+			isSharp = false;
+			isFlat = false;
+			if (note.equalsIgnoreCase(Constants.NOTE_B)) {
+				System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - note has been promoted to a C natural");
+				note = Constants.NOTE_C;
+			} else if (note.equalsIgnoreCase(Constants.NOTE_E)) {
+				System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - note has been promoted to a F natural");
+				note = Constants.NOTE_F;
+			} else if (note.equalsIgnoreCase(Constants.NOTE_C)) {
+				System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - note has been demoted to a B natural");
+				note = Constants.NOTE_B;
+			} else if (note.equalsIgnoreCase(Constants.NOTE_F)) {
+				System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - note has been demoted to an E natural");
+				note = Constants.NOTE_E;
+			}
+			
+		}
+		
 		initializeNote(note, octave, duration, isSharp, isFlat);
 		// TODO throw if initializeNote returns false?
 	}
@@ -75,6 +104,72 @@ public class MusicNote implements Comparable<MusicNote> {
 	public MusicNote(int duration) {
 		initializeNote(Constants.NOTE_REST, Constants.REST_OCTAVE_VALUE, duration, false, false);
 		// TODO throw if initializeNote returns false?
+	}
+	
+	/**
+	 * Overloaded constructor that takes in a compare value and duration, and determines an appropriate note letter, octave, and whether it should be sharp or not.
+	 * This will never result in a flat.
+	 * @param compareValue A compare value to determine note letter and octave from, and whether it should be sharp
+	 * @param duration The duration the rest should last for, in milliseconds
+	 */
+	public MusicNote(double compVal, int duration) {
+		
+		// this is a temp variable to help determine what the letter / octave are
+		double tempCompValue = compVal;
+		
+		// Determine if this is a sharp or not, by seeing if there is a 0.5 modifier.
+		isFlat = false;
+		if (tempCompValue % 1 == 0.5) {
+			isSharp = true;
+			tempCompValue -= 0.5;
+		}
+		// End result: a whole-number "temp" compare value.
+		// Next, we'll shave off octaves 1 at a time, increasing the octave count each time, until we are left with a note position, which can be used to directly get the note letter.
+		octave = 1;
+		while (tempCompValue > 7) {
+			tempCompValue -= 7;
+			++octave;
+		}		
+		note = NoteUtils.getNoteForPosition((int)tempCompValue);
+		
+		// TODO should we check if we get a combination such as B sharp, E sharp, C flat, F flat here? and throw in this case?
+		//      it shouldn't be possible, but it could happen as a bug from any of the translators or perhaps from the source music data.
+		if ( (note.equalsIgnoreCase(Constants.NOTE_B) && isSharp) ||
+			 (note.equalsIgnoreCase(Constants.NOTE_E) && isSharp) ||
+			 (note.equalsIgnoreCase(Constants.NOTE_C) && isFlat) ||
+			 (note.equalsIgnoreCase(Constants.NOTE_F) && isFlat) ) {
+			
+			// Since we are basing this off of a "compare value", we can't tell if it was meant to be a B sharp (and thus, a C), or a C flat (and thus, a B),
+			// since both of those would have a compare value of "9.5"
+			
+			// We're just going to set a compare value of -1 and error out, we don't have a way to 100% guarantee what this note should really be.
+			compareValue = -1;
+			// TODO throw exception?
+			
+			/*
+			System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - had a sharp B or sharp E, or a flat C or flat F. Confirm - note: " + note +
+					           ", isSharp: " + isSharp + ", isFlat: " + isFlat);
+			// promote the note to the appropriate natural note (B sharp becomes C natural, E sharp becomes F natural, C flat becomes B natural, F flat becomes E natural)
+			isSharp = false;
+			isFlat = false;
+			if (note.equalsIgnoreCase(Constants.NOTE_B)) {
+				System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - note has been promoted to a C natural");
+				note = Constants.NOTE_C;
+			} else if (note.equalsIgnoreCase(Constants.NOTE_E)) {
+				System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - note has been promoted to a F natural");
+				note = Constants.NOTE_F;
+			} else if (note.equalsIgnoreCase(Constants.NOTE_C)) {
+				System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - note has been demoted to a B natural");
+				note = Constants.NOTE_B;
+			} else if (note.equalsIgnoreCase(Constants.NOTE_F)) {
+				System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - note has been demoted to an E natural");
+				note = Constants.NOTE_E;
+			}
+			*/
+		} else {
+			initializeNote(note, octave, duration, isSharp, false);
+			// TODO throw if initializeNote returns false?
+		}
 	}
 	
 	/**

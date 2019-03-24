@@ -382,4 +382,73 @@ public class MusicNoteTests {
 	}
 	
 	
+	// Compare Value constructor tests
+	
+	@Test
+	public void testCVCtorFirstOctaveSharp() {
+		MusicNote note = new MusicNote(7.5, 1000);
+		boolean validCompVal = note.getCompareValue() == 7.5;
+		assertTrue(validCompVal);
+	}
+
+	@Test
+	public void testCVCtorSecondOctaveSharp() {
+		MusicNote note = new MusicNote(8.5, 1000);
+		boolean validCompVal = note.getCompareValue() == 8.5;
+		assertTrue(validCompVal);
+	}
+
+	@Test
+	public void testCVCtorBigInt() {
+		MusicNote note = new MusicNote(43, 1000);
+		boolean validCompVal = note.getCompareValue() == 43;
+		assertTrue(validCompVal);
+	}
+
+	// Promotion / Demotion tests (we put in checks for B sharps and E sharps to become C naturals and F naturals, and for C / F flats to become B / E naturals, for safety's sake.
+	// Also catch cases where we can't tell which way to promote / demote, so we return an error value. (A 9.5 is indecipherable from B sharp or C flat)
+	
+	
+	@Test
+	public void testCtorPromote1() {
+		MusicNote note = new MusicNote(Constants.NOTE_B, 2, 1000, true, false);
+		boolean validCompVal = note.getCompareValue() == 10; // should promote B sharp to C, a 10
+		assertTrue(validCompVal);
+	}
+	
+	@Test
+	public void testCtorPromote2() {
+		MusicNote note = new MusicNote(Constants.NOTE_E, 2, 1000, true, false);
+		boolean validCompVal = note.getCompareValue() == 13; // should promote E sharp to F, a 13
+		assertTrue(validCompVal);
+	}
+	
+	@Test
+	public void testCtorDemote1() {
+		MusicNote note = new MusicNote(Constants.NOTE_C, 2, 1000, false, true);
+		boolean validCompVal = note.getCompareValue() == 9; // should demote C flat to B, a 9
+		assertTrue(validCompVal);
+	}
+	
+	@Test
+	public void testCtorDemote2() {
+		MusicNote note = new MusicNote(Constants.NOTE_F, 2, 1000, false, true);
+		boolean validCompVal = note.getCompareValue() == 12; // should demote F flat to E, a 12
+		assertTrue(validCompVal);
+	}
+	
+	@Test
+	public void testCVCtorIndecipherable1() {
+		MusicNote note = new MusicNote(9.5, 1000); // a 9.5 would be a "B sharp" or a "C flat" and shouldn't be possible. We can't tell if it should be B or C, so -1, error out.
+		boolean validCompVal = note.getCompareValue() == -1;
+		assertTrue(validCompVal);
+	}
+	
+	@Test
+	public void testCVCtorIndecipherable2() {
+		MusicNote note = new MusicNote(5.5, 1000); // a 5.5 would be an "E sharp" or a "F flat" and shouldn't be possible. We can't tell if it should be E or F, so -1, error out.
+		boolean validCompVal = note.getCompareValue() == -1;
+		assertTrue(validCompVal);
+	}
+	
 }

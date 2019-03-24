@@ -20,27 +20,35 @@ import java.util.LinkedList;
  * Thus, as one moves down the linkedlist collection (from index 0, to 1, to 2, ...),
  *  one will move across the song in order from start to finish, containing all the notes that need to be hit and when.
  * 
+ * Processing of an .alc file is performed by the AlcReader.
+ * 
  * @author smartel
  *
  */
 public class MusicSheet {
+	LinkedList<MusicSlice> slices;
+	String infoLine; // the informational line from the .alc file
+	int noteCount; // the note count from the .alc file
 	
-	public MusicSheet() {
-		LinkedList<MusicSlice> slices = new LinkedList<MusicSlice>();
+	public MusicSheet(String infoLine, int noteCount) {
+		slices = new LinkedList<MusicSlice>();
+		this.infoLine = infoLine;
+		this.noteCount = noteCount;
 	}
 	
-	// TODO
-	// implement a way to process our alchemized music data file format
-	public boolean processAlcFile(String filePath) {
-		boolean isSuccessful = false;
-
-		// TODO implement
-		// TODO confirm it is an alchemized music data file - check the header line of the file, as well as the file extension.
-		//      if it isn't, we can abort and return false
-		// TODO insert entries into slices collection by processing the file
-		
-		return isSuccessful;
+	/**
+	 * Adds the given MusicSlice to the collection
+	 * @param slice
+	 */
+	public void addSlice(MusicSlice slice) {
+		slices.add(slice);
 	}
 	
-	
+	/**
+	 * Simple getter for MusicSlice collection
+	 * @return
+	 */
+	public LinkedList<MusicSlice> getSlices() {
+		return slices;
+	}
 }

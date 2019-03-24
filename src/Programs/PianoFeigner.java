@@ -4,6 +4,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.net.URL;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.TreeSet;
 
 import javax.sound.sampled.AudioInputStream;
@@ -14,8 +15,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import DataObjs.MusicNote;
+import DataObjs.MusicSheet;
 import DataObjs.MusicSlice;
 import DataObjs.PianoProperties;
+import Processors.AlcReader;
 import Utils.Constants;
 import Utils.NoteUtils;
 
@@ -69,31 +72,39 @@ public class PianoFeigner extends JFrame {
 	
 	public static void main(String[] args) {
 		String propertiesPath = "";
+		String alcPath = "";
+		MusicSheet sheet;
 
-		if (args.length < 1) {
-			System.out.println("PianoFeigner#main - Please provide a filepath to a Piano Properties file. Gracefully exiting.");
+		if (args.length < 2) {
+			System.out.println("PianoFeigner#main - Please provide a filepath to a Piano Properties file, and a file path to an .alc file. Gracefully exiting.");
 		} else {
 			propertiesPath = args[0];
+			alcPath = args[1];
 	
 			PianoFeigner pf = new PianoFeigner();
 			pf.properties = new PianoProperties(propertiesPath);
 			
+			AlcReader ar = new AlcReader();
+			sheet = ar.loadAlcFile(alcPath);
+			
 			if (pf.properties.didLoad()) {
 				System.out.println(pf.properties); // for manual inspection of properties
-				pf.execute();
+				pf.execute(sheet);
 			} else {
 				System.out.println("PianoFeigner#main - Please fix the reported errors with the properties file and execute the program again. Gracefully exiting.");
 			}
 		}
 	}
 	
-	public void execute() {
+	public void execute(MusicSheet sheet) {
 		boolean showLetters;
 		int numWhiteKeys = Integer.parseInt(properties.getSetting(Constants.SETTINGS_NUM_WHITE_KEYS));
 		int numBlackKeys = Integer.parseInt(properties.getSetting(Constants.SETTINGS_NUM_BLACK_KEYS));
 		String firstNote = properties.getSetting(Constants.SETTINGS_FIRST_NOTE);
 		int firstOctave = Integer.parseInt(properties.getSetting(Constants.SETTINGS_FIRST_OCTAVE));
 		String pianoVoice = properties.getSetting(Constants.SETTINGS_VOICE);
+		LinkedList<MusicSlice> slices = sheet.getSlices();
+		MusicSlice currentSlice;
 
 		if (properties.getSetting(Constants.SETTINGS_DISPLAY_LETTERS).equalsIgnoreCase("1")) {
 			showLetters = true;
@@ -111,19 +122,14 @@ public class PianoFeigner extends JFrame {
 		PianoPanel pianoPanel = new PianoPanel(numWhiteKeys, numBlackKeys, firstNote, firstOctave, showLetters);
 		add(pianoPanel);
 		
+		// TODO this is not fully implemented yet. we do not have a timer that iterates through all the slices during playback.
+		//      for now, we can only display and play sound for the first slice in the collection.
+		currentSlice = slices.get(0);
 		
-		// TODO THESE ARE TEMPORARILY HARDCODED HIT NOTES, FOR TESTING HOW NOTES THAT ARE STRUCK WILL BE DISPLAYED:
-		MusicSlice slice = new MusicSlice();
-		MusicNote note = new MusicNote("C", 3, 1, false, false);
-		MusicNote note2 = new MusicNote("E", 4, 1, false, false);
-		MusicNote note3 = new MusicNote("G", 5, 1, true, false);
-		slice.addMusicNote(note);
-		slice.addMusicNote(note2);
-		slice.addMusicNote(note3);
-		pianoPanel.setHitNotes(slice);
+		pianoPanel.setHitNotes(currentSlice);
 
 		// every time we repaint the piano gui with new notes, play the sounds too
-		playSoundsForSlice(slice, pianoVoice);
+		playSoundsForSlice(currentSlice, pianoVoice);
 				
 		// we'll have slight buffer space in the ui
 		setSize(Constants.KEY_WIDTH_WHITE * (numWhiteKeys + 1), Constants.KEY_HEIGHT_WHITE + 45);
