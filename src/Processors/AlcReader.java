@@ -72,9 +72,18 @@ public class AlcReader {
 					// we need to add the old slice to the music sheet object and construct a new slice to put this music note into.
 					// otherwise, the start times are the same, so just add it to the existing slice.
 					if (prevStartTime != currStartTime) {
+						
+						// data integrity check: if the current line's start time occurs EARLIER than the previous line's, then we have bad data, most likely due to hand-editing of the file.
+						if (prevStartTime > currStartTime) {
+							System.out.println("AlcReader#loadAlcFile - error - note data is out of order. Aborting load. Confirm - prevStartTime: " + prevStartTime + ", currStartTime: " + currStartTime);
+							sheet = null;
+							break;
+						}
+						
 						sheet.addSlice(slice);
 						slice = new MusicSlice();
 						slice.addMusicNote(note);
+						prevStartTime = currStartTime;
 					} else {
 						slice.addMusicNote(note);
 					}
@@ -83,7 +92,9 @@ public class AlcReader {
 					++noteLinesReadIn;
 				}
 			}
-			sheet.addSlice(slice); // this is necessary because the newest slice hasn't been added to the musicsheet yet, due to how the while-loop handles old/new slices.
+			if (sheet != null) {
+				sheet.addSlice(slice); // this is necessary because the newest slice hasn't been added to the musicsheet yet, due to how the while-loop handles old/new slices.
+			}
 			br.close();
 		} catch (Exception e) {
 			System.out.println("AlcReader#loadAlcFile - error - exception occurred while reading .alc file at path: [" + alcFilePath + "]. Exception: " + e.getMessage());
@@ -96,7 +107,7 @@ public class AlcReader {
 			sheet = null; // the object may not be null if the file was 2 lines long, so this ensures we return null
 		} else if (noteCount != noteLinesReadIn) { // if we fail the integrity check, report an error and return a null object
 			System.out.println("AlcReader#loadAlcFile - error - .alc file failed the file integrity check. The number of notes read in does not match the expected note count." +
-						       "Read in: " + noteLinesReadIn + ", Expected: " + noteCount);
+						       " Read in: " + noteLinesReadIn + ", Expected: " + noteCount);
 			sheet = null;
 		} else if (noteCount == 0) { // if there was a note count of 0, then it is an (intentionally?) empty alc file
 			System.out.println("AlcReader#loadAlcFile - error - .alc file had a value of 0 in the note count line. File integrity can't be validated. File will not be processed.");
@@ -108,4 +119,29 @@ public class AlcReader {
 
 		return sheet;
 	}
+	
+	/* TODO potential bug discovered 3-24:
+	// If an alc file is written with start times out of order, for example:
+	7000 12 1000
+	7000 19 1000
+	8000 13 1000
+	8000 20 1000
+	9000 13.5 1000
+	9000 20.5 1000
+	10000 14 1000
+	10000 21 1000
+	11000 14.5 1000
+	11000 21.5 1000
+	7000 15 1000
+	7000 22 1000
+	8000 16 1000
+	8000 23 1000
+	9000 17 1000
+	9000 24 1000
+	// The 2nd set of notes starting at 7000, 8000, 9000, are not added to the original music slices created for the first 7000, 8000, 9000. They are instead appended to the linkedlist
+	// as new slices appearing after 11000, which can result in playback errors when read by the PianoFeigner.
+	// A simple solution comes at a performance cost - see if an existing slice already has the current note's start time. If it does, add it to that slice instead.
+	// However, this bug presumably would only occur when hand-editing an .alc file and making a mistake. Will gauge later how much of a priority this fix is.
+	// Perhaps it would be better to have a data integrity check, where if the next line's start time is LESS than the previous lines, we throw a warning or error.
+	*/
 }

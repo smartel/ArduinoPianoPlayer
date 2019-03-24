@@ -2,6 +2,8 @@ package Programs;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -13,6 +15,7 @@ import javax.sound.sampled.Clip;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 
 import DataObjs.MusicNote;
 import DataObjs.MusicSheet;
@@ -69,6 +72,7 @@ import Utils.NoteUtils;
 public class PianoFeigner extends JFrame {
 	
 	PianoProperties properties;
+	private int sliceIndex;
 	
 	public static void main(String[] args) {
 		String propertiesPath = "";
@@ -89,7 +93,11 @@ public class PianoFeigner extends JFrame {
 			
 			if (pf.properties.didLoad()) {
 				System.out.println(pf.properties); // for manual inspection of properties
-				pf.execute(sheet);
+				if (sheet != null) {
+					pf.execute(sheet);
+				} else {
+					System.out.println("PianoFeigner#main - Failed to load .alc file. Gracefully exiting.");
+				}
 			} else {
 				System.out.println("PianoFeigner#main - Please fix the reported errors with the properties file and execute the program again. Gracefully exiting.");
 			}
@@ -104,7 +112,8 @@ public class PianoFeigner extends JFrame {
 		int firstOctave = Integer.parseInt(properties.getSetting(Constants.SETTINGS_FIRST_OCTAVE));
 		String pianoVoice = properties.getSetting(Constants.SETTINGS_VOICE);
 		LinkedList<MusicSlice> slices = sheet.getSlices();
-		MusicSlice currentSlice;
+		sliceIndex = 0;
+		int delay = 1000;
 
 		if (properties.getSetting(Constants.SETTINGS_DISPLAY_LETTERS).equalsIgnoreCase("1")) {
 			showLetters = true;
@@ -122,14 +131,26 @@ public class PianoFeigner extends JFrame {
 		PianoPanel pianoPanel = new PianoPanel(numWhiteKeys, numBlackKeys, firstNote, firstOctave, showLetters);
 		add(pianoPanel);
 		
-		// TODO this is not fully implemented yet. we do not have a timer that iterates through all the slices during playback.
-		//      for now, we can only display and play sound for the first slice in the collection.
-		currentSlice = slices.get(0);
 		
-		pianoPanel.setHitNotes(currentSlice);
+		
+		// TODO
+		// test implementation - every second, grab the next music slice, draw it, and play the sound effects.
+		// the real delay will need to be determined for the final implemention. i guess we'll need to find a way to have a non-changing delay between slices.
+		Timer timer = new Timer(delay, new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				MusicSlice currentSlice = slices.get(sliceIndex);
+				++sliceIndex;
+				pianoPanel.setHitNotes(currentSlice);
+				// every time we repaint the piano gui with new notes, play the sounds too
+				playSoundsForSlice(currentSlice, pianoVoice);
+				
+				// TODO how do we get this to stop when we hit the end? would rather not loop it, would rather it end until we, idk, hit start button or rerun the program.
 
-		// every time we repaint the piano gui with new notes, play the sounds too
-		playSoundsForSlice(currentSlice, pianoVoice);
+				repaint();
+			}
+		});
+		timer.start();
 				
 		// we'll have slight buffer space in the ui
 		setSize(Constants.KEY_WIDTH_WHITE * (numWhiteKeys + 1), Constants.KEY_HEIGHT_WHITE + 45);
