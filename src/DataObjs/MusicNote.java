@@ -37,9 +37,14 @@ public class MusicNote implements Comparable<MusicNote> {
 	private double compareValue;
 	
 	/**
-	 * TBD: will depend on bpm / time signature / etc. May need to exclude notes smaller than a certain size, such as 1/8th notes.
+	 * The duration of time the note should be held for when hit, in milliseconds.
 	 */
-	private double duration;
+	private int duration;
+	
+	/**
+	 * Used purely by the PianoFeigner to know how much longer it needs to display the note for, in milliseconds.
+	 */
+	private int remainingDuration;
 	
 	/**
 	 * Constructs the note using the octave and a String note value (for example, octave 2 "C"), with flags for whether the note is sharp or flat.
@@ -186,6 +191,7 @@ public class MusicNote implements Comparable<MusicNote> {
 		this.octave = octave;
 		this.isSharp = isSharp;
 		this.isFlat = isFlat;
+		this.duration = duration;
 		
 		// Ensure the note is not marked as both sharp AND flat
 		if (isSharp && isFlat) {
@@ -276,4 +282,32 @@ public class MusicNote implements Comparable<MusicNote> {
 		details = "CompareValue: " + compareValue + " | Duration: " + duration + "ms | Note: " + note + ", Octave: " + octave + " | isSharp: " + isSharp + ", isFlat: " + isFlat;
 		return details;
 	}
+	
+	
+	
+	// Methods used purely by the PianoFeigner to know how long to display the note as held in the GUI.
+	// This presumably will have no bearing on the Arduino side, and I'm trying to break away from my naming conventions as much as possible to show these are separate.
+	
+	/**
+	 * Init the remaining duration for this note. On initialization, it should just equal the note's regular duration (since it hasn't been displayed yet)
+	 */
+	public void feignerInitRemainingDuration() {
+		remainingDuration = duration;
+	}
+	/**
+	 * Return the amount of time left (in milliseconds) that this note needs to be displayed for.
+	 * @return remaining display duration in milliseconds
+	 */
+	public int feignerGetRemainingDuration() {
+		return remainingDuration;
+	}
+	/**
+	 * The amount of time this note has been displayed since it was initialized, or since the last time its duration was decreased.
+	 * This needs to be subtracted from its current remaining duration, so we can keep track of how much longer it should be displayed for.
+	 * @param amount amount of time in milliseconds to decrease from its remaining duration.
+	 */
+	public void feignerDecreaseRemainingDuration(int amount) {
+		remainingDuration -= amount;
+	}
+	
 }

@@ -16,7 +16,7 @@ import DataObjs.MusicSlice;
  * @author smartel
  */
 public class AlcReader {
-
+	
 	public AlcReader() {
 	}
 	
@@ -119,29 +119,19 @@ public class AlcReader {
 
 		return sheet;
 	}
+
+
+	// TODO potential issue:
+	//      we hadn't considered what would happen if we had input like the below:
+	//      1000 7.0 5000
+	//      2000 7.0 1000
+	//      Translated, that would mean 1 second into the song, we play a G for 5 seconds. But then the next line says to play a G for 1 second, at the 2 second point in the song.
+	//      Not entirely sure how this is handled in production yet, and not sure what we want the desired outcome to be (re: finish the first note and don't add the second,
+	//       or chomp the first note and have it be cut off by the second, which will play for its full duration)
+	//      Presumably, the PianoFeigner could just open 2 audio clips (if it successfully adds both to the LiveSlice and doesn't break trying to display them both as hit), 1 clip for each,
+	//      but what about the Arduino finger(s)?
+	//      Actually, it remains to be seen if this is even an issue. How would you write overlapping notes like that on actual sheet music, and play it with one human finger?
+	//       So maybe it'd only occur with bad data / bad translation?
 	
-	/* TODO potential bug discovered 3-24:
-	// If an alc file is written with start times out of order, for example:
-	7000 12 1000
-	7000 19 1000
-	8000 13 1000
-	8000 20 1000
-	9000 13.5 1000
-	9000 20.5 1000
-	10000 14 1000
-	10000 21 1000
-	11000 14.5 1000
-	11000 21.5 1000
-	7000 15 1000
-	7000 22 1000
-	8000 16 1000
-	8000 23 1000
-	9000 17 1000
-	9000 24 1000
-	// The 2nd set of notes starting at 7000, 8000, 9000, are not added to the original music slices created for the first 7000, 8000, 9000. They are instead appended to the linkedlist
-	// as new slices appearing after 11000, which can result in playback errors when read by the PianoFeigner.
-	// A simple solution comes at a performance cost - see if an existing slice already has the current note's start time. If it does, add it to that slice instead.
-	// However, this bug presumably would only occur when hand-editing an .alc file and making a mistake. Will gauge later how much of a priority this fix is.
-	// Perhaps it would be better to have a data integrity check, where if the next line's start time is LESS than the previous lines, we throw a warning or error.
-	*/
+	
 }

@@ -113,7 +113,7 @@ public class PianoFeigner extends JFrame {
 		String pianoVoice = properties.getSetting(Constants.SETTINGS_VOICE);
 		LinkedList<MusicSlice> slices = sheet.getSlices();
 		sliceIndex = 0;
-		int delay = 1000;
+		int delay = 500;
 
 		if (properties.getSetting(Constants.SETTINGS_DISPLAY_LETTERS).equalsIgnoreCase("1")) {
 			showLetters = true;
@@ -136,12 +136,32 @@ public class PianoFeigner extends JFrame {
 		// TODO
 		// test implementation - every second, grab the next music slice, draw it, and play the sound effects.
 		// the real delay will need to be determined for the final implemention. i guess we'll need to find a way to have a non-changing delay between slices.
+		
+		// TODO having a non-changing delay between slices actually presents a big issue for the PianoFeigner, that shouldn't impact the arduino.
+		//      The expected implementation was that the collection would just store start durations and length durations, so one slight could start at 1000ms, another could
+		//      start at 2000ms, another at 5000ms, and so on. If we need a constant value, 1000ms would work, but since there are no entries for 3000ms and 4000ms,
+		//      it means we skip seconds ahead in the song and go straight from 2000ms to 5000ms in only 1000ms.
+		//      This is because the feigner currently just non-intelligently skips to the next MusicSlice option on a constant delay.
+		//      The error is, the next MusicSlice may have notes that have a start duration LARGER than that constant delay.
+		//      I would rather not manipulate the .alc output file, especially if the issue would only be present in the PianoFeigner gui.
+		//      Potential solutions:
+		//      We could have the reader determine a "lowest common duration" that can fit between every timeslice, whether it is 1 seconds, or 250ms, or what have you.
+		//       (Alternatively, it could be stored on the count line as another integrity check, but I'm not sure if that's particularly desirable, especially with hand-editing in mind)
+		//      It could then fill the MusicSheet with dummy MusicSlice options (like in the above example, at 3000ms and 4000ms), with rest notes. This way,
+		//      no sound is played, and because we have the LiveSlice object in the PianoPanel, notes that started at 1000ms and 2000ms will continue to play / roll over
+		//      if their hold durations were sufficiently large.
+		// TODO wait a sec, you never even look at the StartDuration either, you just load the next MusicSLice right up. oh boy.
+		//      maybe, since we have a timer, just have a rolling >time within the song, and you can send an empty new MusicSlice if the next slice in the collection's
+		//      start duration is greater than the rolling duration. And if it matches, then you pass the one from the collection on to play sounds / display.
+		//      htis means we dont need empty garbage in the collection either.
+		//      JUST CONSIDERING MULTIPLE OPTIONS. But don't leave >StartDuration unused.
+		
 		Timer timer = new Timer(delay, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				MusicSlice currentSlice = slices.get(sliceIndex);
 				++sliceIndex;
-				pianoPanel.setHitNotes(currentSlice);
+				pianoPanel.setHitNotes(currentSlice, delay);
 				// every time we repaint the piano gui with new notes, play the sounds too
 				playSoundsForSlice(currentSlice, pianoVoice);
 				
@@ -194,7 +214,7 @@ class PianoPanel extends JPanel {
 	private String firstKey;
 	private int firstOctave;
 	private boolean showLetters;
-	private MusicSlice currentSlice;
+	private MusicSlice liveSlice;
 	
 	/**
 	 * @param numWhiteKeys The number of white keys to display in the piano gui
@@ -209,10 +229,44 @@ class PianoPanel extends JPanel {
 		this.firstKey = firstKey;
 		this.firstOctave = firstOctave;
 		this.showLetters = showLetters;
+		liveSlice = new MusicSlice();
 	}
 	
-	public void setHitNotes(MusicSlice currentSlice) {
-		this.currentSlice = currentSlice;
+	/**
+	 * When notes are struck, we store them in a MusicSlice that belongs to the gui, because notes may have different hold durations within a given slice,
+	 * and a new slice may appear before the durations of some (or all) current notes have fully played out from the previous slice.
+	 * So the idea is, we copy all of the struck notes into the gui's personal slice, and when a new slice arrives, we subtract the delay in ms from the currently displayed notes,
+	 * and if any notes still have remaining durations >= 0, we need to keep displaying those notes as hit, while also displaying the newly struck notes.
+	 * Additionally, if any notes have remaining durations <= 0 (ideally exactly 0), then we want to remove them as hit from the gui.
+	 * Once this new Slice containing all the updated notes to hit is created, we point to that one to display.
+	 * @param currentSlice Slice to copy MusicNotes from and to display as hit in the gui.
+	 * @param duration the duration of time between MusicSlices in milliseconds
+	 */
+	public void setHitNotes(MusicSlice currentSlice, int duration) {
+		MusicSlice newSlice = new MusicSlice(); // this will store the new notes to display in the gui
+		
+		// check for expired previous notes
+		if (liveSlice.getNotes() != null) {
+			Iterator<MusicNote> iter = liveSlice.getNotes().iterator();
+			while (iter.hasNext()) {
+				MusicNote note = iter.next();
+				note.feignerDecreaseRemainingDuration(duration);
+				if (note.feignerGetRemainingDuration() > 0) {
+					// only notes that have remaining duration can be kept
+					newSlice.addMusicNote(note);
+				}
+			}
+		}
+		
+		// add the new notes to display as hit
+		Iterator<MusicNote> iter = currentSlice.getNotes().iterator();
+		while (iter.hasNext()) {
+			MusicNote note = iter.next();
+			note.feignerInitRemainingDuration();
+			newSlice.addMusicNote(note);
+		}
+		
+		liveSlice = newSlice;
 	}
 	
 	public void doDrawing(Graphics g) {
@@ -269,7 +323,7 @@ class PianoPanel extends JPanel {
 
 			// we'll fill in the color for the key, and then draw a rectangle over it to give it a border
 			// if this is a note that is being struck, color it with the struck-color
-			if (currentSlice.containsNote(currentCompVal)) {
+			if (liveSlice.containsNote(currentCompVal)) {
 				gra.setColor(Constants.KEY_COLOR_HIT);
 				gra.fillRect(startX, startY, Constants.KEY_WIDTH_WHITE, Constants.KEY_HEIGHT_WHITE);
 			} else {
@@ -327,7 +381,7 @@ class PianoPanel extends JPanel {
 				// Determine the compare value of this key, so we can check if it is being struck currently.
 				String displayLetter = NoteUtils.getNoteForPosition(patternPosition);
 				double currentCompVal = NoteUtils.generateCompareValue(displayLetter, currentOctave, true, false);
-				if (currentSlice.containsNote(currentCompVal)) {
+				if (liveSlice.containsNote(currentCompVal)) {
 					gra.setColor(Constants.KEY_COLOR_HIT);
 				} else {
 					gra.setColor(Constants.KEY_COLOR_BLACK);
