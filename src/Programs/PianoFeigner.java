@@ -166,21 +166,25 @@ public class PianoFeigner extends JFrame {
 			Timer timer = new Timer(delay, new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
+					if (sliceIndex < slices.size()) {
 					MusicSlice currentSlice = slices.get(sliceIndex);
-					
-					if (currentSlice.getStartTime() != rollingTime) {
-						// while this is the next MusicSlice we need to play, it is NOT time to play it yet. so do nothing and wait for the next loop.
-						// we'll send an empty MusicSlice, so the LiveSlice will update as needed and remove expired Notes from the gui.
-						pianoPanel.setHitNotes(new MusicSlice(rollingTime), delay, rollingTime);
-						// No sounds need to be played, as no MusicSlice is starting at this timestamp.
-					} else {
-						++sliceIndex;
-						pianoPanel.setHitNotes(currentSlice, delay, rollingTime);
-						// every time we repaint the piano gui with new notes, play the sounds too
-						playSoundsForSlice(currentSlice, pianoVoice);
-						// TODO how do we get this to stop when we hit the end? would rather not loop it, would rather it end and play / show no notes until we, idk, hit a start button to rerun the program.
+						
+						if (currentSlice.getStartTime() != rollingTime) {
+							// while this is the next MusicSlice we need to play, it is NOT time to play it yet. so do nothing and wait for the next loop.
+							// we'll send an empty MusicSlice, so the LiveSlice will update as needed and remove expired Notes from the gui.
+							pianoPanel.setHitNotes(new MusicSlice(rollingTime), delay, rollingTime);
+							// No sounds need to be played, as no MusicSlice is starting at this timestamp.
+						} else {
+							++sliceIndex;
+							pianoPanel.setHitNotes(currentSlice, delay, rollingTime);
+							// every time we repaint the piano gui with new notes, play the sounds too
+							playSoundsForSlice(currentSlice, pianoVoice);
+						}
+						repaint();
+					} else if (rollingTime > sheet.getEndTime()) {
+						setVisible(false);
+						System.exit(0);
 					}
-					repaint();
 					rollingTime += delay;
 				}
 			});

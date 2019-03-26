@@ -382,7 +382,7 @@ public class TransMusicXML {
 		
 		// the contents of the .alc file. The first line is purely informational and mentions which file was translated.
 		// The rest of the contents are generated after translation has completed, during printing of the song details for manual review.
-		String alcContent = "Alchemized Music Data File generated from translation of the following .musicxml file: " + xmlFilePath + "\n";
+		String alcContent = "Alchemized Music Data File generated from translation of the following .musicxml file: [" + xmlFilePath + "] with bpmMultiplier of: [" + bpmMultiplier + "]\n";
 	
 		try {
 			

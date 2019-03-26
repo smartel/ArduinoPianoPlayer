@@ -3,6 +3,8 @@ package DataObjs;
 import java.util.Iterator;
 import java.util.TreeSet;
 
+import Utils.Constants;
+
 /**
  * A MusicSlice is a representation of a single, very specific point in time,
  *  containing a collection of all the piano keys (MusicNotes) that need to be struck simultaneously.
@@ -41,9 +43,15 @@ public class MusicSlice {
 		isSuccessful = notes.add(note);
 		
 		if (!isSuccessful) {
-			// Log the error. no action will need to be taken otherwise, because it is presumably not adding because it is a duplicate?
-			// But the error message itself will alert me to look at the code and debug what happened.
-			System.out.println("MusicSlice#addMusicNote: failed to add MusicNote to notes collection.\r\nNote details: " + note.toString());
+			// Presumably, this is a "duplicate entry."
+			// Should we chomp the existing note, by removing it and adding the new one?
+			// Should we intentionally keep the one with the longest (remaining) duration?
+			// Like, it could be the case there was already an "A" with x duration in there, and we tried to add another "A" same octave, perhaps same or different duration.
+			// So far, I seem to be hitting this with rests (exclusively?), probably because they all have the same compare value of 0.
+			// So you know what? Since rests CAN'T EVEN BE HEARD, and may be the only thing causing this error, I'm only going to issue an error if it is a non-rest, and we can go from there for potential solutions if / when we see the error again.
+			if (note.getCompareValue() != Constants.REST_COMP_VALUE) {
+				System.out.println("MusicSlice#addMusicNote: failed to add MusicNote to notes collection.\r\nMusicSlice startTime: " + startTime + " | Note details: " + note.toString());
+			}
 		}
 
 	}

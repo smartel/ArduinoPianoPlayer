@@ -5,3 +5,6 @@ From musicxml's official site:
 		https://www.musicxml.com/tutorial/hello-world/
 	Others (by name):
 		https://www.musicxml.com/music-in-musicxml/example-set/
+		
+Various pieces from https://musescore.com/
+	Links used should be in the information line at the top of the .alc unless I'm bad.

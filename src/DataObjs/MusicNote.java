@@ -119,23 +119,32 @@ public class MusicNote implements Comparable<MusicNote> {
 	 */
 	public MusicNote(double compVal, int duration) {
 		
-		// this is a temp variable to help determine what the letter / octave are
-		double tempCompValue = compVal;
-		
-		// Determine if this is a sharp or not, by seeing if there is a 0.5 modifier.
-		isFlat = false;
-		if (tempCompValue % 1 == 0.5) {
-			isSharp = true;
-			tempCompValue -= 0.5;
+		// If it is a rest note, use the rest constants
+		if (compVal == Constants.REST_COMP_VALUE) {
+			isSharp = false;
+			isFlat = false;
+			octave = Constants.REST_OCTAVE_VALUE;
+			note = Constants.NOTE_REST;
+		} else {
+			
+			// this is a temp variable to help determine what the letter / octave are
+			double tempCompValue = compVal;
+			
+			// Determine if this is a sharp or not, by seeing if there is a 0.5 modifier.
+			isFlat = false;
+			if (tempCompValue % 1 == 0.5) {
+				isSharp = true;
+				tempCompValue -= 0.5;
+			}
+			// End result: a whole-number "temp" compare value.
+			// Next, we'll shave off octaves 1 at a time, increasing the octave count each time, until we are left with a note position, which can be used to directly get the note letter.
+			octave = 1;
+			while (tempCompValue > 7) {
+				tempCompValue -= 7;
+				++octave;
+			}
+			note = NoteUtils.getNoteForPosition((int)tempCompValue);
 		}
-		// End result: a whole-number "temp" compare value.
-		// Next, we'll shave off octaves 1 at a time, increasing the octave count each time, until we are left with a note position, which can be used to directly get the note letter.
-		octave = 1;
-		while (tempCompValue > 7) {
-			tempCompValue -= 7;
-			++octave;
-		}		
-		note = NoteUtils.getNoteForPosition((int)tempCompValue);
 		
 		// TODO should we check if we get a combination such as B sharp, E sharp, C flat, F flat here? and throw in this case?
 		//      it shouldn't be possible, but it could happen as a bug from any of the translators or perhaps from the source music data.
@@ -259,6 +268,14 @@ public class MusicNote implements Comparable<MusicNote> {
 		}
 		
 		return isSuccessful;
+	}
+	
+	/**
+	 * Simple getter for duration
+	 * @return duration
+	 */
+	public int getDuration() {
+		return duration;
 	}
 	
 	public double getCompareValue() {

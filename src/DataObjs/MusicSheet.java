@@ -1,5 +1,6 @@
 package DataObjs;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
@@ -73,10 +74,37 @@ public class MusicSheet {
 			}
 			
 		} else {
-			System.out.println("MusicSheet#getGCD - error - there is only 1 MusicSlice in the collection. A GCD for gui playback can't be determined.");
+			System.out.println("MusicSheet#getGCD - error - there are note enough MusicSlices in this MusicSheet (minimum required: 2). A GCD for gui playback can't be determined. MusicSlices available: " + slices.size());
 		}
 		
 		return gcd;
+	}
+	
+	/**
+	 * Looks through every note, taking count of each note's start value and start time, and determines when this song "ends" (aka, when the note with the last playing duration expires).
+	 * Need to be careful, because the last note to expire may not be from the last MusicSlice. It could be from a prior MusicSlice by having a note with a very long duration.
+	 * This is why we must check every single MusicSlice, and not just the last one.
+	 * @return the time (in milliseconds) that the last note in this song stops playing. -1 if there are any errors.
+	 */
+	public int getEndTime() {
+		int highestEndTime = -1;
+		
+		for (int x = 0; x < slices.size(); ++x) {
+			MusicSlice currSlice = slices.get(x);
+
+			Iterator<MusicNote> iter = currSlice.getNotes().iterator();
+			while (iter.hasNext()) {
+				MusicNote currNote = iter.next();
+				// The note's duration, in addition to the timestamp it starts, will show the ultimate timestamp the note ends at.
+				int currEndTime = currNote.getDuration() + currSlice.getStartTime();
+				// If this is the latest note we have so far, set the song's endDuration to it.
+				if (currEndTime > highestEndTime) {
+					highestEndTime = currEndTime;
+				}
+			}
+		}
+		
+		return highestEndTime;
 	}
 	
 	/**

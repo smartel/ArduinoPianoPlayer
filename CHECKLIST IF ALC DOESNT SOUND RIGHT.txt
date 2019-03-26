@@ -4,3 +4,4 @@ Checklist of steps to take if the .alc output doesn't sound right, because I'm s
 	a. If there are too many voices, such as a piano, a drum, a bass, ... then it may sound weird when all are converted to piano
 	b. Try to see if there are multiple parts in the song. We fixed a bug earlier today (3-25-2019) where parts weren't merging successfully. Since we only have so many song examples, still a bit worried.
 3. NoteTransposer has a few remaining TODO's still, such as REPEAT BARS.
+4. Sometimes it really just is bad SOURCE data. The NoteTransposer was inserting some notes with 0 durations while translating a musicxml I grabbed from a website, and it turned out to be because the <duration> element was missing inside those <note>s. No, really.
