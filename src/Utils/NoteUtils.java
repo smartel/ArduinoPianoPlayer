@@ -160,8 +160,12 @@ public class NoteUtils {
 	 * Given the compareValue for a specific note, as well as which piano voice / instrument to use,
 	 * this will returns the uri of the appropriate .wav file to play the note (for use with the Feigner)
 	 * 
+	 * It should be noted, that the sounds played are simple .wav files, and their lengths are not extended or shortened by the note's duration,
+	 * nor are they interruptable. You can kind of imagine the gui is... playing pizzicato. Quick little bursts for each note.
+	 * When the arduino is in action, it will make use of the duration fields to know how long to extend a "finger" for on a note, so it will be used there.
+	 * 
 	 * @param compareValue the piano key to find the sound file for
-	 * @param voice the instrument or "voice" (ie piano, orgel, harpsichord, ...) to play the note with. See Constants.java for a list of implemented voices.
+	 * @param voice the instrument or "voice" (ie grand (piano), orgel, harpsichord, ...) to play the note with. See Constants.java for a list of implemented voices.
 	 * @return uri of the .wav file containing that piano key's sound
 	 */
 	public static String getSoundWavForNote(double compareValue, String voice, PianoProperties properties) {
@@ -170,7 +174,7 @@ public class NoteUtils {
 		double compMin = Double.parseDouble(properties.getSetting(Constants.SETTINGS_MIN_COMP_VALUE));
 		double compMax = Double.parseDouble(properties.getSetting(Constants.SETTINGS_MAX_COMP_VALUE));
 		
-		if (!voice.equalsIgnoreCase(Constants.VOICE_ORGEL) && !voice.equalsIgnoreCase(Constants.VOICE_PIANO)) {
+		if (!voice.equalsIgnoreCase(Constants.VOICE_ORGEL) && !voice.equalsIgnoreCase(Constants.VOICE_GRAND)) {
 			System.out.println("NoteUrils#getSoundWavForNote - error - invalid voice supplied: " + voice);
 			valid = false;
 		}
@@ -187,22 +191,10 @@ public class NoteUtils {
 		
 		
 		if (valid && voice.equalsIgnoreCase(Constants.VOICE_ORGEL)) {
-			// TODO temp implementation. for now, simply returning test files based on whether it is an even or odd compareValue
-			if (compareValue % 2 == 0) {
-				uri = "hoo.wav";
-			} else {
-				uri = "ko.wav";
-			}
-		} else if (valid && voice.equalsIgnoreCase(Constants.VOICE_PIANO)) {
-			// TODO temp implementation. for now, simply returning test files based on whether it is an even or odd compareValue
-			if (compareValue % 2 == 0) {
-				uri = "hoo.wav";
-			} else {
-				uri = "ko.wav";
-			}
+			uri = "orgel/" + compareValue + ".wav";
+		} else if (valid && voice.equalsIgnoreCase(Constants.VOICE_GRAND)) {
+			uri = "grand/" + compareValue + ".wav";
 		}
-		
-		// TODO reminder to self to delete those test .wav files once we have the real voice wavs.
 		
 		return uri;
 	}

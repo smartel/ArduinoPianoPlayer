@@ -18,9 +18,20 @@ import java.util.TreeSet;
 public class MusicSlice {
 
 	TreeSet<MusicNote> notes;
+	int startTime;
 	
-	public MusicSlice() {
+	/**
+	 * Constructs a MusicSlice, which holds a collection of MusicNotes that need to be hit simultaneously, at the supplied "start time" (in milliseconds) within the song.
+	 * If an invalid start time is supplied (any integer value below 0), then we'll automatically set it to start at 0 instead, while displaying a warning.
+	 * @param startTime the time, in milliseconds, after which the notes should play
+	 */
+	public MusicSlice(int startValue) {
 		notes = new TreeSet<MusicNote>();
+		startTime = startValue;
+		if (startTime < 0) {
+			startTime = 0;
+			System.out.println("MusicSlice#ctor(startTime) - warning - invalid startValue supplied, using 0 instead. Supplied startValue: " + startValue);
+		}
 	}
 	
 	
@@ -66,6 +77,14 @@ public class MusicSlice {
 	 */
 	public TreeSet<MusicNote> getNotes() {
 		return notes;
+	}
+	
+	/**
+	 * Getter for "start time" in milliseconds (how far into the song until the notes are hit)
+	 * @return startTime
+	 */
+	public int getStartTime() {
+		return startTime;
 	}
 	
 }

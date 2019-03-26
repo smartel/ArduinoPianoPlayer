@@ -79,7 +79,7 @@ public class PianoProperties {
 					}
 				} else if (setting.equalsIgnoreCase(Constants.SETTINGS_VOICE)) {
 					fieldCount++;
-					if (!value.equalsIgnoreCase(Constants.VOICE_PIANO) && !value.equalsIgnoreCase(Constants.VOICE_ORGEL)) {
+					if (!value.equalsIgnoreCase(Constants.VOICE_GRAND) && !value.equalsIgnoreCase(Constants.VOICE_ORGEL)) {
 						errorMsgs += "Error with " + Constants.SETTINGS_VOICE + ": value is not a valid Piano voice. Value was: " + value + "\n";
 					} else {
 						settings.put(Constants.SETTINGS_VOICE, value);

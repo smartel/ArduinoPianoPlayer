@@ -35,8 +35,7 @@ public class AlcReader {
 		int noteCount = -1;
 		int noteLinesReadIn = 0;
 
-		String noteLine = null;
-		int prevStartTime = 0;
+		int prevStartTime = -1;
 		StringTokenizer st;
 		
 		int currStartTime;
@@ -57,7 +56,6 @@ public class AlcReader {
 					countLine = line;
 					noteCount = Integer.parseInt(countLine); // if this fails, we throw an exception and return a null MusicSheet. Checking for nullness is how we determine if a file loaded successfully.
 					sheet = new MusicSheet(headerLine, noteCount);
-					slice = new MusicSlice();
 				} else {
 					// all lines after the first 2 contain note information.
 					// if there are not enough tokens in a line, or bad data (such as non-numeric characters), an exception will be thrown and the load aborted.
@@ -67,6 +65,16 @@ public class AlcReader {
 					noteDuration = Integer.parseInt(st.nextToken());
 
 					MusicNote note = new MusicNote(compareValue, noteDuration);
+					
+					if (slice == null) {
+						slice = new MusicSlice(currStartTime);
+					}
+					
+					// initializing prevStartTime if it hasn't already.
+					// we initialize here, so the first line in an .alc file doesn't HAVE to start on a 0.
+					if (prevStartTime == -1) {
+						prevStartTime = currStartTime;
+					}
 
 					// if the currStartTime is greater than prevStartTime, this means we're in a new time slice.
 					// we need to add the old slice to the music sheet object and construct a new slice to put this music note into.
@@ -81,7 +89,7 @@ public class AlcReader {
 						}
 						
 						sheet.addSlice(slice);
-						slice = new MusicSlice();
+						slice = new MusicSlice(currStartTime);
 						slice.addMusicNote(note);
 						prevStartTime = currStartTime;
 					} else {

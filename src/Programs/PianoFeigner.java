@@ -55,14 +55,11 @@ import Utils.NoteUtils;
 	// one could open the musicxml in any sheet music program, so that'd be redundant
 	// let's do a topdown view, we could highlight which keys are being hit during playback, which will easily show all notes in a chord
 	
-	// TODO - do we want audio?
 	// audio of the gui:
 	// we could capture audio of all of your pianos keys (held for a long duration), so the gui can play them back (and chomp them early if needed)
 	// could store each note audio file under its compareValue ? so we don't worry if a given sound is a G sharp or A flat etc
 	// not sure how chords will sound / if they'll cut each other off / not sound right
 	// we could have a toggle for voice - something like a radio button, options are piano and orgel (my favorite voice when I would record my own playing)
-
-	// TODO - need it to play live / scroll through time
 
 /**
  * Basic gui that shows the top-down view of a piano keyboard, showing how a song will play (given an .alc file) in real time.
@@ -71,8 +68,14 @@ import Utils.NoteUtils;
  */
 public class PianoFeigner extends JFrame {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1314933741042363037L;
+	
 	PianoProperties properties;
 	private int sliceIndex;
+	private int rollingTime;
 	
 	public static void main(String[] args) {
 		String propertiesPath = "";
@@ -113,7 +116,8 @@ public class PianoFeigner extends JFrame {
 		String pianoVoice = properties.getSetting(Constants.SETTINGS_VOICE);
 		LinkedList<MusicSlice> slices = sheet.getSlices();
 		sliceIndex = 0;
-		int delay = 500;
+		rollingTime = 0;
+		int delay;
 
 		if (properties.getSetting(Constants.SETTINGS_DISPLAY_LETTERS).equalsIgnoreCase("1")) {
 			showLetters = true;
@@ -155,29 +159,40 @@ public class PianoFeigner extends JFrame {
 		//      start duration is greater than the rolling duration. And if it matches, then you pass the one from the collection on to play sounds / display.
 		//      htis means we dont need empty garbage in the collection either.
 		//      JUST CONSIDERING MULTIPLE OPTIONS. But don't leave >StartDuration unused.
-		
-		Timer timer = new Timer(delay, new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				MusicSlice currentSlice = slices.get(sliceIndex);
-				++sliceIndex;
-				pianoPanel.setHitNotes(currentSlice, delay);
-				// every time we repaint the piano gui with new notes, play the sounds too
-				playSoundsForSlice(currentSlice, pianoVoice);
-				
-				// TODO how do we get this to stop when we hit the end? would rather not loop it, would rather it end until we, idk, hit start button or rerun the program.
-
-				repaint();
-			}
-		});
-		timer.start();
-				
-		// we'll have slight buffer space in the ui
-		setSize(Constants.KEY_WIDTH_WHITE * (numWhiteKeys + 1), Constants.KEY_HEIGHT_WHITE + 45);
-		setTitle("Piano Feigner");
-		setLocationRelativeTo(null);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setVisible(true);
+		delay = sheet.getGCD();
+		if (delay == -1 || delay == 0) {
+			System.out.println("PianoFeigner#execute - Failed to generate a valid greatest-common-divisor between the MusicSlices, so playback is aborted. Delay: " + delay);
+		} else {
+			Timer timer = new Timer(delay, new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					MusicSlice currentSlice = slices.get(sliceIndex);
+					
+					if (currentSlice.getStartTime() != rollingTime) {
+						// while this is the next MusicSlice we need to play, it is NOT time to play it yet. so do nothing and wait for the next loop.
+						// we'll send an empty MusicSlice, so the LiveSlice will update as needed and remove expired Notes from the gui.
+						pianoPanel.setHitNotes(new MusicSlice(rollingTime), delay, rollingTime);
+						// No sounds need to be played, as no MusicSlice is starting at this timestamp.
+					} else {
+						++sliceIndex;
+						pianoPanel.setHitNotes(currentSlice, delay, rollingTime);
+						// every time we repaint the piano gui with new notes, play the sounds too
+						playSoundsForSlice(currentSlice, pianoVoice);
+						// TODO how do we get this to stop when we hit the end? would rather not loop it, would rather it end and play / show no notes until we, idk, hit a start button to rerun the program.
+					}
+					repaint();
+					rollingTime += delay;
+				}
+			});
+			timer.start();
+					
+			// we'll have slight buffer space in the ui
+			setSize(Constants.KEY_WIDTH_WHITE * (numWhiteKeys + 1), Constants.KEY_HEIGHT_WHITE + 45);
+			setTitle("Piano Feigner");
+			setLocationRelativeTo(null);
+			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			setVisible(true);
+		}
 	}
 	
 	public void playSoundsForSlice(MusicSlice slice, String pianoVoice) {
@@ -189,7 +204,6 @@ public class PianoFeigner extends JFrame {
 		while (iter.hasNext()) {
 			MusicNote note = iter.next();
 			compareValue = note.getCompareValue();
-			System.out.println("PianoFeigner#execute - This note's compareValue is: " + compareValue); // TODO delete in the future, just testing the right .wav's are playing.
 			if (compareValue > 0) {
 				try {
 					String uri = NoteUtils.getSoundWavForNote(compareValue, pianoVoice, properties);
@@ -208,6 +222,11 @@ public class PianoFeigner extends JFrame {
 }
 
 class PianoPanel extends JPanel {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 364405349942973048L;
 	
 	private int numWhiteKeys;
 	private int numBlackKeys;
@@ -229,7 +248,7 @@ class PianoPanel extends JPanel {
 		this.firstKey = firstKey;
 		this.firstOctave = firstOctave;
 		this.showLetters = showLetters;
-		liveSlice = new MusicSlice();
+		liveSlice = new MusicSlice(0);
 	}
 	
 	/**
@@ -241,9 +260,10 @@ class PianoPanel extends JPanel {
 	 * Once this new Slice containing all the updated notes to hit is created, we point to that one to display.
 	 * @param currentSlice Slice to copy MusicNotes from and to display as hit in the gui.
 	 * @param duration the duration of time between MusicSlices in milliseconds
+	 * @param startTime the time in milliseconds the new MusicSlice starts at
 	 */
-	public void setHitNotes(MusicSlice currentSlice, int duration) {
-		MusicSlice newSlice = new MusicSlice(); // this will store the new notes to display in the gui
+	public void setHitNotes(MusicSlice currentSlice, int duration, int startTime) {
+		MusicSlice newSlice = new MusicSlice(startTime); // this will store the new notes to display in the gui
 		
 		// check for expired previous notes
 		if (liveSlice.getNotes() != null) {
@@ -298,9 +318,8 @@ class PianoPanel extends JPanel {
 		currentOctave = firstOctave;
 		
 		// at a minimum, ensure the number of white and black keys are at least positive
-		// TODO - get some real checking on the ratio of white to black?
-		// TODO actually, am I just doing this wrong from the start? Instead of passing in white and black as separate values,
-		//      we already have the start key + octave, so just pass in a "total count of keys" value instead? and use that to build the white / black keys, building from the start.
+		// the number of white/black keys are determined from the TOTAL NUMBER OF KEYS from the piano properties, so we know it will be a valid ratio,
+		// and not some weird bad data like 7 white keys and 1 black key, or 4 white keys and 20 black keys
 		if (numWhiteKeys < 0 || numBlackKeys < 0) {
 			System.out.println("PianoFeigner.PianoPanel#doDrawing - invalid white/black key counts given. Both values must be greater than 0. " +
 							   "numWhiteKeys: " + numWhiteKeys + ", numBlackKeys: " + numBlackKeys);

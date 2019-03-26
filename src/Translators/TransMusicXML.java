@@ -14,7 +14,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import Utils.Constants;
 import Utils.NoteUtils;
 
 /**
@@ -196,6 +195,7 @@ public class TransMusicXML {
 		private int currentMeasure = -1; // purely for debugging / confirming we are reading the xml properly, we likely won't need this value for converting to time slices
 		private int rollingDuration = 0;
 		private int previousStartTime = 0;
+		private boolean hasPart = false; // if we are at a new part, we need to skip to the beginning of the song
 		
 		public InputSource resolveEntity(java.lang.String publicId,
                 java.lang.String systemId)
@@ -252,6 +252,10 @@ public class TransMusicXML {
 			if (qName.equalsIgnoreCase("chord")) {
 				hasChord = true;
 			}
+			if (qName.equalsIgnoreCase("part")) {
+				hasPart = true;
+			}
+			
 			
 			// misc / rolling counters
 			if (qName.equalsIgnoreCase("measure")) {
@@ -314,7 +318,10 @@ public class TransMusicXML {
 				currentNote.setIsChord(true);
 				hasChord = false;
 			}
-			
+			else if (hasPart) {
+				rollingDuration = 0;
+				hasPart = false;
+			}
 			
 			// if we have finished processing a Note node, then insert it into the collection of NoteNodes.
 			// there are a few complicated rules around the note's start duration, and the rolling duration.
@@ -359,10 +366,11 @@ public class TransMusicXML {
 	 * Attempts to translate the provided xml / musicxml file (xmlFilePath) into an Alchemized Music Data File, stored at (alcFilePath)
 	 * @param xmlFilePath filepath for the xml / musicxml file to translate
 	 * @param alcFilePath filepath to write the output .alc file to
+	 * @param bpmMultiplier value to multiply the start times and note durations, in milliseconds. May take some experimentation adjusting it for individual songs to get it to sound right.
 	 * @return true if successfully translated and output an .alc file, false otherwise. if it translated but failed to output an .alc file (such as due to file permissions),
 	 * 		        it will still return false, but the valid contents of the .alc file may be available in the standard output terminal.
 	 */
-	public boolean parseMusicXMLFile(String xmlFilePath, String alcFilePath) {
+	public boolean parseMusicXMLFile(String xmlFilePath, String alcFilePath, int bpmMultiplier) {
 		boolean isSuccessful = false;
 		AttributeNode attrNode = null;
 		LinkedList<NoteNode> notes = null;
@@ -376,9 +384,6 @@ public class TransMusicXML {
 		// The rest of the contents are generated after translation has completed, during printing of the song details for manual review.
 		String alcContent = "Alchemized Music Data File generated from translation of the following .musicxml file: " + xmlFilePath + "\n";
 	
-		// placeholder multiplier intended to convert note durations to milliseconds. more research needed. may end up using a beats-per-minute conversion and taking bpm as an input arg.
-		final int TEMP_MS_CONVERSION_MULT = 10;
-		
 		try {
 			
 			// Opting to use a SAX parser since it'll be faster and more efficient than DOM. We only need to read the xml, not write anything.
@@ -387,11 +392,8 @@ public class TransMusicXML {
 			MusicXMLHandler musHandler = new MusicXMLHandler();
 			
 			
-			// TODO how do we want to handle different voices? As in, if the musicxml contains multiple instruments / parts.
-			// Short term I've been removing other voices that aren't needed / aren't piano. I guess the alternative options are:
-			//  1. merging them all together into one piano file,
-			//  2. indicating which voice(s) you want as an optional input parameter,
-			//  3. breaking them into individual exports, one per voice
+			// If we see a new part in the musicxml, we roll the rollingDuration (our location within the song) back to the very beginning and start merging those notes in.
+			// If there are an excessive number of parts in the song, such as voices for drums, bass, ... you may want to forcibly remove those undesired voices from the xml.
 			// This would be referring to the:  <score-part id=blah> and <part-name> elements, and then finding the matching <part id=blah> node
 			
 			// Will likely need to care about:
@@ -441,7 +443,14 @@ public class TransMusicXML {
 			//             That is, we could have a chord on the treble clef of 4 notes, while also playing 2 notes on the bass clef, but in musicxml only 4 of those 6 notes are marked w/ <chord/>
 			// Additionally, notes that are chords will have special rules not to increment the rolling duration with an already-account-for duration from the first note,
 			//   nor will it use the rolling duration already incremented by the first note in the chord (it will instead use the "previous" rolling duration)
-						
+			
+			// <part>
+			// Every time we see a new part, it is a new instrument's notes. Reset the position back to the beginning.
+			
+			// TODO it looks like there is a Repeat bar element we need to handle.
+			//      note - it would be possible to edit out by hand / just duplicate the notes in an absolute worst case scenario.
+			//      but try to find a song with a repeat section if you can, so we can implement it.
+			
 			// We end up with one attribute object and a collection of note objects
 			saxParser.parse(xmlFilePath, musHandler);
 			attrNode = musHandler.getAttributeNode();
@@ -465,12 +474,9 @@ public class TransMusicXML {
 					System.out.println("");
 				}
 				
-				// TODO
-				// perform conversion of the note's duration and start time values into milliseconds.
-				// For the time being, we're using a placeholder multiplier.
-				// The real value to use may be passed in, whether it is a multiplier, or perhaps the song's bpm to help determine durations. Research needed.
-				startTimeInMs = note.getStartTime() * TEMP_MS_CONVERSION_MULT;
-				durationInMs = note.getDuration() * TEMP_MS_CONVERSION_MULT;
+				// perform conversion of the note's duration and start time values into milliseconds, based on the provided multiplier.
+				startTimeInMs = note.getStartTime() * bpmMultiplier;
+				durationInMs = note.getDuration() * bpmMultiplier;
 				
 				// Determine the compareValue to write to the .alc file
 				
@@ -484,9 +490,13 @@ public class TransMusicXML {
 				} else { // 0 or close enough to round to 0, so a neutral note
 					note.setAlter(0);
 				}
-					
-				compValue = NoteUtils.generateCompareValue(note.getStep(), note.getOctave(), note.getAlter() == 1 ? true : false,
-						                                                                     note.getAlter() == -1 ? true : false);
+				
+				if (note.isRest) {
+					compValue = 0;
+				} else {
+				   compValue = NoteUtils.generateCompareValue(note.getStep(), note.getOctave(), note.getAlter() == 1 ? true : false,
+						                                                                        note.getAlter() == -1 ? true : false);
+				}
 
 				alcContent += startTimeInMs + " " + compValue + " " + durationInMs + "\n";				
 				System.out.println(note);

@@ -14,7 +14,7 @@ public class MusicSliceTests {
 	
 	@Test
 	public void testContainsNoteSuccess() {
-		MusicSlice slice = new MusicSlice();
+		MusicSlice slice = new MusicSlice(0);
 		MusicNote note = new MusicNote("A", 1, 1, false, false);
 		MusicNote note2 = new MusicNote("B", 1, 2, false, false);
 		slice.addMusicNote(note);
@@ -28,7 +28,7 @@ public class MusicSliceTests {
 	
 	@Test
 	public void testContainsNoteFail() {
-		MusicSlice slice = new MusicSlice();
+		MusicSlice slice = new MusicSlice(0);
 		MusicNote note = new MusicNote("A", 1, 1, false, false);
 		MusicNote note2 = new MusicNote("B", 1, 2, false, false);
 		slice.addMusicNote(note);
@@ -40,4 +40,12 @@ public class MusicSliceTests {
 		assertFalse(doesContain);
 	}
 	
+	@Test
+	public void testContainsNegativeStartTime() {
+		MusicSlice slice = new MusicSlice(-10);
+		MusicNote note = new MusicNote("A", 1, 1, false, false);
+		slice.addMusicNote(note);
+		
+		assertTrue(slice.getStartTime() == 0);
+	}
 }

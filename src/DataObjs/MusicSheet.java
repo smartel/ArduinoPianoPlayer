@@ -37,6 +37,49 @@ public class MusicSheet {
 	}
 	
 	/**
+	 * Generates and returns the greatest-common-divisor for all of the MusicSlice's start durations.
+	 * The PianoFeigner will rely on this duration for looping over the MusicSlices and repainting and playing sound files at appropriate times.
+	 * @return greatest-common-divisor of all the MusicSlice's start durations, in milliseconds, or -1 if it fails for any reason (empty collection, ...)
+	 */
+	public int getGCD() {
+		int gcd = -1;
+		int highestGap = -1;
+		
+		if (slices.size() > 1) {
+			// Slices are stored in increasing order of startTimes.
+			// Scroll through all the Slices, comparing the previous slice's startDuration and the next slice's startDuration, to get the gap between slices.
+			// We'll store the maximum gap we see.
+			// If that maximum gap works as the gcd, great. If it doesn't, we'll keep subtracting 1 from it until we determine the gcd, then break out of the loop and return it.
+			for (int n = 0; n < slices.size()-1; ++n) {
+				int currentGap = slices.get(n+1).getStartTime() - slices.get(n).getStartTime();
+				if (currentGap > highestGap) {
+					highestGap = currentGap;
+				}
+			}
+			
+			// find the highest value, starting from highestGap, that can fit into all startDurations
+			for (int x = highestGap; x > 0; --x) {
+				for (int n = 0; n < slices.size()-1; ++n) {
+					int currentGap = slices.get(n+1).getStartTime() - slices.get(n).getStartTime();
+					if (currentGap % x == 0) {
+						gcd = x;
+						if (n == slices.size()-2) { // if we are at the end of the collection, then it means it was a valid gcd for all of them, so we can stop looking now
+							x = 0;
+						}
+					} else {
+						break;
+					}
+				}
+			}
+			
+		} else {
+			System.out.println("MusicSheet#getGCD - error - there is only 1 MusicSlice in the collection. A GCD for gui playback can't be determined.");
+		}
+		
+		return gcd;
+	}
+	
+	/**
 	 * Adds the given MusicSlice to the collection
 	 * @param slice
 	 */

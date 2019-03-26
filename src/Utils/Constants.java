@@ -71,7 +71,7 @@ public class Constants {
 	final public static Color KEY_COLOR_HIT = Color.YELLOW;
 	
 	// implemented voices for the PianoFeigner (determines which .wav files are picked up for compareValues)
-	final public static String VOICE_PIANO = "PIANO";
+	final public static String VOICE_GRAND = "GRAND"; // 3-25-2019 - note: changed the name of this voice from the vague "PIANO" value to "GRAND", as in, grand piano
 	final public static String VOICE_ORGEL = "ORGEL";
 	
 

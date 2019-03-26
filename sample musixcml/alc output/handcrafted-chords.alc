@@ -1,4 +1,4 @@
-Handcrafted alc file, with durations of 1 second and going up an octave one second at a time. Intended to be as simple as possible, no overlap, no chords, single notes moving from left to right.
+Handcrafted alc file, with durations of 1 second and going up an octave one second at a time. Slightly more complicated than our "simple" example, now has chords and sharps.
 46
 0 8 1000
 0 15 1000
