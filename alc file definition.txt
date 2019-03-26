@@ -14,4 +14,6 @@ ALL FOLLOWING LINES of an alc file represent individual music notes each (so a c
 	1. start time to play the note (in milliseconds), integer
 	2. "compare value" of a note (NoteUtils takes the note's letter, octave, and whether it is sharp or flat, and converts it into a single number representing which key to hit), double
 		NOTE: A rest will have a compare value of 0, as it has no letter, octave, or sharp/flat values.
+		NOTE: legacy .alc files may contain notes with compare values of 0 (rests), but since no action needs to be performed by the PianoFeigner gui nor the arduino to play a rest,
+		      rest notes can be stricken entirely from all future .alc file generation.
 	3. duration to play the note for (in milliseconds), integer

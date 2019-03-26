@@ -460,8 +460,16 @@ public class TransMusicXML {
 			// Display for manual review while also creating a string representation of our .alc format
 			System.out.println(attrNode + "\n");
 			
-			// add in the header line containing the total note count, which is used to check the integrity of the .alc file later on when the notes are read in
-			alcContent += notes.size() + "\n";
+			// get the count of how many notes are rests which don't need to be written to the .alc file, so we can adjust the note-count appropriately.
+			int numRests = 0;
+			for (int x = 0; x < notes.size(); ++x) {
+				if (notes.get(x).isRest) {
+					++numRests;
+				}
+			}
+			
+			// add in the header line containing the total note count (minus rests), which is used to check the integrity of the .alc file later on when the notes are read in
+			alcContent += (notes.size() - numRests) + "\n";
 			
 			currentStartTime = 0;
 			for (int x = 0; x < notes.size(); ++x) {
@@ -478,28 +486,28 @@ public class TransMusicXML {
 				startTimeInMs = note.getStartTime() * bpmMultiplier;
 				durationInMs = note.getDuration() * bpmMultiplier;
 				
-				// Determine the compareValue to write to the .alc file
-				
-				// We need to handle musicxml's microtones. Our .alc file only allows for sharps and flats (1 and -1 respectively).
-				// So, if we have a microtone (some value between 0 and 1, or 0 and -1), I guess we'll have to decide whether it is closer to 0 or closer to +-1. Round it.
-				double currentAlter = note.getAlter();
-				if (currentAlter == 1 || currentAlter >= 0.5) { // treat as a sharp
-					note.setAlter(1);
-				} else if (currentAlter == -1 || currentAlter <= -0.5) { // treat as a flat
-					note.setAlter(-1);
-				} else { // 0 or close enough to round to 0, so a neutral note
-					note.setAlter(0);
-				}
-				
-				if (note.isRest) {
-					compValue = 0;
-				} else {
-				   compValue = NoteUtils.generateCompareValue(note.getStep(), note.getOctave(), note.getAlter() == 1 ? true : false,
+				// No rest notes need to be written to the .alc file, since there are no actions that robotic fingers need to take to play rests.
+				if (!note.isRest) {
+					// We need to handle musicxml's microtones. Our .alc file only allows for sharps and flats (1 and -1 respectively).
+					// So, if we have a microtone (some value between 0 and 1, or 0 and -1), I guess we'll have to decide whether it is closer to 0 or closer to +-1. Round it.
+					double currentAlter = note.getAlter();
+					if (currentAlter == 1 || currentAlter >= 0.5) { // treat as a sharp
+						note.setAlter(1);
+					} else if (currentAlter == -1 || currentAlter <= -0.5) { // treat as a flat
+						note.setAlter(-1);
+					} else { // 0 or close enough to round to 0, so a neutral note
+						note.setAlter(0);
+					}
+					
+					compValue = NoteUtils.generateCompareValue(note.getStep(), note.getOctave(), note.getAlter() == 1 ? true : false,
 						                                                                        note.getAlter() == -1 ? true : false);
+
+					alcContent += startTimeInMs + " " + compValue + " " + durationInMs + "\n";				
+					System.out.println(note);
+				} else {
+					System.out.println("Skipping rest note, no action required by gui or arduino: " + note);
 				}
 
-				alcContent += startTimeInMs + " " + compValue + " " + durationInMs + "\n";				
-				System.out.println(note);
 			}
 
 			isSuccessful = true;
