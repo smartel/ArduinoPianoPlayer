@@ -26,8 +26,29 @@ public class TransMusicXML {
 	public TransMusicXML() {
 	}
 	
+	/**
+	 * Base for the most basic units of the musicxml - note elements and barline elements.
+	 * 
+	 * @author smartel
+	 */
+	public class Node implements Comparable<Node> {
+		protected int startTime; // when the note should be played in the song (based on a rolling duration value)
+
+		public int getStartTime() {
+			return startTime;
+		}
+		public void setStartTime(int val) {
+			startTime = val;
+		}
+		
+		@Override
+		public int compareTo(Node other) {
+			return Integer.compare(this.startTime, other.startTime);
+		}
+	}
+	
 	// wrapper around fields relating to the Attribute node and some of its child nodes
-	public class AttributeNode {
+	public class AttributeNode extends Node {
 		private int beats;
 		private int beatType;
 		private int divisions;
@@ -62,18 +83,31 @@ public class TransMusicXML {
 	}
 	
 	// wrapper around fields relating to the Note node
-	public class NoteNode implements Comparable<NoteNode> {
+	public class NoteNode extends Node {
 		private double alter; // -1 = flat, 1 = sharp, and decimal values are microtones, so we can't store it in an integer
 		private int duration; // the duration this note is played for
 		private int measure; // informational only, to confirm we are reading the xml and "backing up" correctly, don't anticipate needing this for converting to time slices
 		private int octave;
-		private int startTime; // when the note should be played in the song (based on a rolling duration value)
 		private String step;
 		private boolean isRest; // if true, indicates this is a rest, and will not have an octave, step, or alter indicator
 		private boolean isChord; // if true, indicates this note is to be played with the previous note(s)
 		
 		public NoteNode() {
 			isRest = false;
+		}
+		
+		// copy-constructor
+		public NoteNode(NoteNode other) {
+			alter = other.alter;
+			duration = other.duration;
+			measure = other.measure;
+			octave = other.octave;
+			if (other.getStep() != null) {
+				step = new String(other.getStep());
+			}
+			isRest = other.isRest;
+			isChord = other.isChord;
+			startTime = other.startTime;
 		}
 		
 		// NOTE: If the note is a "rest", it will have a duration (defining how long the rest is), but it will otherwise have a 'null' step, octave 0, alter 0.
@@ -90,9 +124,6 @@ public class TransMusicXML {
 		}
 		public int getOctave() {
 			return octave;
-		}
-		public int getStartTime() {
-			return startTime;
 		}
 		public String getStep() {
 			return step;
@@ -122,9 +153,6 @@ public class TransMusicXML {
 		public void setOctave(int val) {
 			octave = val;
 		}
-		public void setStartTime(int val) {
-			startTime = val;
-		}
 		public void setStep(String val) {
 			step = val;
 		}
@@ -145,36 +173,88 @@ public class TransMusicXML {
 			return data;
 		}
 
-		public int compareTo(NoteNode other) {
-			int returnVal = 0;
-
-			// we will compare on a few different tiers:
-			// if the notes have the same start time, then we'll effectively try to go musically-alphabetically / left-to-right across the piano surface.
-			// we'll compare octave, and if they're the same, then we compare note (step), and if those are the same, then we'll compare alter.
-			if (startTime == other.getStartTime()) {
-				if (octave == other.getOctave()) {
-					if (step == other.getStep()) {
-						returnVal = Double.compare(alter, other.getAlter());
+		public int compareTo(Node other) {
+			if (other instanceof NoteNode) {
+				int returnVal = 0;
+				NoteNode otherNote = (NoteNode) other;
+				
+				// we will compare on a few different tiers:
+				// if the notes have the same start time, then we'll effectively try to go musically-alphabetically / left-to-right across the piano surface.
+				// we'll compare octave, and if they're the same, then we compare note (step), and if those are the same, then we'll compare alter.
+				if (startTime == otherNote.getStartTime()) {
+					if (octave == otherNote.getOctave()) {
+						if (step == otherNote.getStep()) {
+							returnVal = Double.compare(alter, otherNote.getAlter());
+						} else {
+							returnVal = step.compareTo(otherNote.getStep());
+						}
 					} else {
-						returnVal = step.compareTo(other.getStep());
+						returnVal = Integer.compare(octave, otherNote.getOctave());
 					}
 				} else {
-					returnVal = Integer.compare(octave, other.getOctave());
+					returnVal = Integer.compare(startTime, otherNote.getStartTime());
 				}
+				
+				return returnVal;
 			} else {
-				returnVal = Integer.compare(startTime, other.getStartTime());
+				return super.compareTo(other);
 			}
-			
-			return returnVal;
 		}
+	}
+	
+	// wrapper around fields relating to the Barline node
+	public class BarLineNode extends Node {
+		private String location;
+		private String repeatDir = ""; // optional, should be "forward" or "backward" if it directs the song cursor to move, that is, a "backward" tells it to jump to the previous "forward"
+		private int endingNum; // optional, the number of a branching path at the end of a repeat, as in, play ending 1 first, then play ending 2 second (after repeated portions)
+		private String endingType = ""; // optional, "start" and "stop" indicate the beginning and end of a branching end number portion
+		
+		public BarLineNode() {}
+		
+		public int getEndingNum() {
+			return endingNum;
+		}
+		public String getEndingType() {
+			return endingType;
+		}
+		public String getLocation() {
+			return location;
+		}
+		public String getRepeatDir() {
+			return repeatDir;
+		}
+		
+		public void setEndingNum(int val) {
+			endingNum = val;
+		}
+		public void setEndingType(String val) {
+			endingType = val;
+		}
+		public void setLocation(String val) {
+			location = val;
+		}
+		public void setRepeatDir(String val) {
+			repeatDir = val;
+		}
+
+		public String toString() {
+			String data;
+			data = "BarLineNode details - start time: " + startTime + ", location: " + location + ", repeat direction: " + repeatDir + ", ending number: " + endingNum + ", ending type: " + endingType;
+			return data;
+		}
+		
+		// I don't think we need to override the compareTo. We can just compare on startTime.
+		// There may be cases where bars are adjacent, such as when a right bar ends (the end of one repeating section), and then a new left bar occurs immediately after.
+		// But since the start times will be equal, the insert order should remain untouched.
 	}
 	
 	public class MusicXMLHandler extends DefaultHandler {
 		
 		AttributeNode attrNode = null;
 		NoteNode currentNote = null;
+		BarLineNode currentBar = null;
 		// This collection will hold all notes as they are read from the xml, with the intention of sorting them into their playing-order once it contains all notes.
-		LinkedList<NoteNode> notes = new LinkedList<NoteNode>();
+		LinkedList<Node> notes = new LinkedList<Node>();
 		StringBuilder data = null;
 		
 		// attribute fields:
@@ -190,6 +270,9 @@ public class TransMusicXML {
 		private boolean hasDuration = false;
 		private boolean hasRest = false;
 		private boolean hasChord = false;
+		
+		// flag if there were any barline notes (boolean flags aren't set because we grab all fields from attributes instead of inspecting elements
+		private boolean containsRepeats = false;
 		
 		// misc / rolling counter fields:
 		private int currentMeasure = -1; // purely for debugging / confirming we are reading the xml properly, we likely won't need this value for converting to time slices
@@ -212,7 +295,7 @@ public class TransMusicXML {
 				attrNode = new AttributeNode();
 			}
 			if (notes == null) {
-				notes = new LinkedList<NoteNode>();
+				notes = new LinkedList<Node>();
 			}
 			
 			// if we're on a new Note node, then create a new object to store its values.
@@ -256,6 +339,40 @@ public class TransMusicXML {
 				hasPart = true;
 			}
 			
+			// Barline work:
+			// if we're on a new BarLine node (optional notes that indicate repeat bars), create a new object to store its values.
+			// Note that everything we need for barlines is stored in the xml's attributes, and not within any elements
+			if (qName.equalsIgnoreCase("barline")) {
+				currentBar = new BarLineNode();
+				for (int x = 0; x < attributes.getLength(); ++x) {
+					String attrName = attributes.getQName(x);
+					if (attrName.equalsIgnoreCase("location")) {
+						currentBar.setLocation(attributes.getValue(x));
+					}
+				}
+				if (!containsRepeats) {
+					containsRepeats = true;
+				}
+			}
+			// BarLine elements we want
+			if (qName.equalsIgnoreCase("repeat")) {
+				for (int x = 0; x < attributes.getLength(); ++x) {
+					String attrName = attributes.getQName(x);
+					if (attrName.equalsIgnoreCase("direction")) {
+						currentBar.setRepeatDir(attributes.getValue(x));
+					}
+				}
+			}
+			if (qName.equalsIgnoreCase("ending")) {
+				for (int x = 0; x < attributes.getLength(); ++x) {
+					String attrName = attributes.getQName(x);
+					if (attrName.equalsIgnoreCase("number")) {
+						currentBar.setEndingNum(Integer.parseInt(attributes.getValue(x)));
+					} else if (attrName.equalsIgnoreCase("type")) {
+						currentBar.setEndingType(attributes.getValue(x));
+					}
+				}
+			}
 			
 			// misc / rolling counters
 			if (qName.equalsIgnoreCase("measure")) {
@@ -347,17 +464,27 @@ public class TransMusicXML {
 				
 				notes.add(currentNote);
 			}
+			
+			if (qName.equalsIgnoreCase("barline")) {
+				// we don't need to do a check in case the given sheet music starts with a bar - whichever we use, both previousStartTime and rollingDuration are initialized to 0.
+				currentBar.setStartTime(rollingDuration);
+				notes.add(currentBar);
+			}
 		}
 		
 		public void characters(char ch[], int start, int length) throws SAXException {
 			data.append(new String(ch, start, length));
 		}
 		
+		public boolean containsRepeats() {
+			return containsRepeats;
+		}
+		
 		public AttributeNode getAttributeNode() {
 			return attrNode;
 		}
 		
-		public LinkedList<NoteNode> getNotes() {
+		public LinkedList<Node> getNotes() {
 			return notes;
 		}
 	}
@@ -373,7 +500,7 @@ public class TransMusicXML {
 	public boolean parseMusicXMLFile(String xmlFilePath, String alcFilePath, int bpmMultiplier) {
 		boolean isSuccessful = false;
 		AttributeNode attrNode = null;
-		LinkedList<NoteNode> notes = null;
+		LinkedList<Node> notes = null;
 		int previousStartTime;
 		int currentStartTime;
 		int startTimeInMs;
@@ -447,9 +574,24 @@ public class TransMusicXML {
 			// <part>
 			// Every time we see a new part, it is a new instrument's notes. Reset the position back to the beginning.
 			
-			// TODO it looks like there is a Repeat bar element we need to handle.
-			//      note - it would be possible to edit out by hand / just duplicate the notes in an absolute worst case scenario.
-			//      but try to find a song with a repeat section if you can, so we can implement it.
+			// Repeats
+			// Initial thoughts:
+			// Repeat elements indicate that all of the notes in a given segment should be played twice (aka, repeated)
+			// It appears musicxml does not support nested repeats, nor do many applications (like Finale), although it could potentially exist in real life / other formats, like... music21?
+			// Repeats can have different endings - that is, there could be a repeat that wraps around 4 measures, let's call them A,B,C and D.
+				// There may be another "nested" repeat for D, with an ending number, like "ending number  1", and then it closes, and then another repeat with ending number 2.
+					// This effectively unwinds to a repeat with a branching ending, that is: A B C D1 A B C D2.
+			// It will be very important to pay attention for branching endings via ending number, as well as looking for "repeat direction", which will be "forward" or "backward" and directs the song cursor.
+			// How we will handle repeats:
+			// Since we are not expecting real "nested repeats" from musicxml, when we find a repeat with a forward direction, we can just duplicate all the created notes into a collection as we add them to the song like normal.
+			// When we hit the end of the repeat and find a backward direction, we simply add all of the duplicated notes (aka the entire new collection) to the song and bam, we have it in the song 2x now.
+			//    We then clear the "new collection" so we don't accidentally add them again if we find another repeat barline later.
+			// If we instead hit a new barline with an ending number, then we add that ending like normal (so, per our earlier example, A B C are already in the song, and we now add D1)
+			// 	!! We do NOT add any "endings" to the "new collection"
+			// After adding the ending, we add everything from the "new collection" to the song, so now we have: A B C D1 A B C
+			// And finally, we can read in the second ending, and we'll have A B C D1 A B C D2, and should be all set (although all notes after this will need to have their start time adjusted by the... length of the repeat?)
+			// How many different endings can we have? I've only seen examples with 2 branches in musicxml. Technically, we should keep adding from the "new collection" until there are no more "endings" ?
+			
 			
 			// We end up with one attribute object and a collection of note objects
 			saxParser.parse(xmlFilePath, musHandler);
@@ -457,55 +599,70 @@ public class TransMusicXML {
 			notes = musHandler.getNotes();
 			Collections.sort(notes);
 
+			// Look for bar lines, so we can insert repeated notes into the collection before generating the .alc file and integrity count.
+			// The collection returned will have all BarLine nodes excluded.
+			if (musHandler.containsRepeats()) {
+				notes = postProcessBarLines(notes);
+			}
+			
+			
 			// Display for manual review while also creating a string representation of our .alc format
 			System.out.println(attrNode + "\n");
 			
-			// get the count of how many notes are rests which don't need to be written to the .alc file, so we can adjust the note-count appropriately.
-			int numRests = 0;
+			// get the count of NoteNodes for the integrity check by just straight up counting all non-rests / non-barlines within the notes collection
+			int integrityCount = 0;
 			for (int x = 0; x < notes.size(); ++x) {
-				if (notes.get(x).isRest) {
-					++numRests;
+				if (notes.get(x) instanceof NoteNode) {
+					NoteNode note = (NoteNode)notes.get(x);
+					if (!note.isRest) {
+						++integrityCount;
+					}
 				}
 			}
-			
-			// add in the header line containing the total note count (minus rests), which is used to check the integrity of the .alc file later on when the notes are read in
-			alcContent += (notes.size() - numRests) + "\n";
+			// add in the header line's total note count, which is used to check the integrity of the .alc file later on when the notes are read in
+			alcContent += integrityCount + "\n";
 			
 			currentStartTime = 0;
 			for (int x = 0; x < notes.size(); ++x) {
-				NoteNode note = notes.get(x);
-				
-				previousStartTime = currentStartTime;
-				currentStartTime = note.getStartTime();
-				// extra newlines for readability between different start times
-				if (previousStartTime != currentStartTime) {
-					System.out.println("");
-				}
-				
-				// perform conversion of the note's duration and start time values into milliseconds, based on the provided multiplier.
-				startTimeInMs = note.getStartTime() * bpmMultiplier;
-				durationInMs = note.getDuration() * bpmMultiplier;
-				
-				// No rest notes need to be written to the .alc file, since there are no actions that robotic fingers need to take to play rests.
-				if (!note.isRest) {
-					// We need to handle musicxml's microtones. Our .alc file only allows for sharps and flats (1 and -1 respectively).
-					// So, if we have a microtone (some value between 0 and 1, or 0 and -1), I guess we'll have to decide whether it is closer to 0 or closer to +-1. Round it.
-					double currentAlter = note.getAlter();
-					if (currentAlter == 1 || currentAlter >= 0.5) { // treat as a sharp
-						note.setAlter(1);
-					} else if (currentAlter == -1 || currentAlter <= -0.5) { // treat as a flat
-						note.setAlter(-1);
-					} else { // 0 or close enough to round to 0, so a neutral note
-						note.setAlter(0);
+				if (notes.get(x) instanceof NoteNode) {
+					NoteNode note = (NoteNode) notes.get(x);
+					
+					previousStartTime = currentStartTime;
+					currentStartTime = note.getStartTime();
+					// extra newlines for readability between different start times
+					if (previousStartTime != currentStartTime) {
+						System.out.println("");
 					}
 					
-					compValue = NoteUtils.generateCompareValue(note.getStep(), note.getOctave(), note.getAlter() == 1 ? true : false,
-						                                                                        note.getAlter() == -1 ? true : false);
-
-					alcContent += startTimeInMs + " " + compValue + " " + durationInMs + "\n";				
-					System.out.println(note);
+					// perform conversion of the note's duration and start time values into milliseconds, based on the provided multiplier.
+					startTimeInMs = note.getStartTime() * bpmMultiplier;
+					durationInMs = note.getDuration() * bpmMultiplier;
+					
+					// No rest notes need to be written to the .alc file, since there are no actions that robotic fingers need to take to play rests.
+					if (!note.isRest) {
+						// We need to handle musicxml's microtones. Our .alc file only allows for sharps and flats (1 and -1 respectively).
+						// So, if we have a microtone (some value between 0 and 1, or 0 and -1), I guess we'll have to decide whether it is closer to 0 or closer to +-1. Round it.
+						double currentAlter = note.getAlter();
+						if (currentAlter == 1 || currentAlter >= 0.5) { // treat as a sharp
+							note.setAlter(1);
+						} else if (currentAlter == -1 || currentAlter <= -0.5) { // treat as a flat
+							note.setAlter(-1);
+						} else { // 0 or close enough to round to 0, so a neutral note
+							note.setAlter(0);
+						}
+						
+						compValue = NoteUtils.generateCompareValue(note.getStep(), note.getOctave(), note.getAlter() == 1 ? true : false,
+							                                                                        note.getAlter() == -1 ? true : false);
+	
+						alcContent += startTimeInMs + " " + compValue + " " + durationInMs + "\n";				
+						System.out.println(note);
+					} else {
+						System.out.println("Skipping rest note, no action required by gui or arduino: " + note);
+					}
 				} else {
-					System.out.println("Skipping rest note, no action required by gui or arduino: " + note);
+					// Note - it used to be possible to hit instances of BarLineNode, but it should no longer be possible.
+					// If the song has any repeat blocks, then the BarLineNodes should be stripped from the collection of notes returned by postProcessBarLines()
+					System.out.println("TransMusicXml#parseMusicXMLFile - Unknown node at: " + notes.get(x).startTime + "ms. Details: " + notes.get(x).toString());
 				}
 
 			}
@@ -513,7 +670,7 @@ public class TransMusicXML {
 			isSuccessful = true;
 			
 			// display the full contents of the .alc file, as well as export it to the desired filepath
-			System.out.println("Full contents of the .alc string:\n-------------\n" + alcContent);			
+			//System.out.println("Full contents of the .alc string:\n-------------\n" + alcContent);			
 			try {
 				BufferedWriter bw = new BufferedWriter(new FileWriter(new File(alcFilePath)));
 				bw.write(alcContent);
@@ -532,6 +689,95 @@ public class TransMusicXML {
 		}
 		
 		return isSuccessful;
+	}
+	
+	/**
+	 * Given a collection of Nodes (containing NoteNodes and BarLineNodes),
+	 * determine where repeat bars start and stop, and duplicate the notes within that range and add it into a new collection of notes.
+	 * The new collection is technically optional, but I think it helps with understanding how the original notes collection is expanded, and we'll also exclude barline nodes from it.
+	 * Counters will need to keep track of the rolling start time adjustment, so the notes appearing after the repeated section can be accurately moved ahead within the song, timewise.
+	 * 
+	 * Additional work will need to see if there are different ending branches at the end of a repeat.
+	 * 
+	 * @param notes
+	 */
+	public LinkedList<Node> postProcessBarLines(LinkedList<Node> notes) {
+		LinkedList<Node> expandedNotes = new LinkedList<Node>();
+		LinkedList<Node> duplicateNotes = new LinkedList<Node>();
+		int startTimeAdjustment = 0;
+		int repeatLeftTime = 0; // the original time (pre-expansion, pre-bpm-multiplier) in the song when we hit the left side of the repeat. for calculating the adjustment applied to all future notes.
+		int repeatRightTime = 0; // the original time (pre-expansion, pre-bpm-multiplier) in the song when we hit the right side of the repeat. for calculating the adjustment applied to all future notes.
+		boolean inRepeat = false; // if we are currently inside of a repeat block, meaning we are currently duplicating notes
+		// TODO boolean inEnding = false; // if we are in an 'ending' block // TODO TBD not sure if needed
+		
+		// To make it as simple as possible:
+		//    Only start duplicating if we see a repeat direction: forward in a left barline (and clear any existing contents of the collection first! this is crucial!)
+		//	  TODO: Stop duplicating if you see an "ending number" attribute in a barline? add them to the expandedNotes collection with some tbd time adjustment?
+		//    Only consume from the "new collection" once we see a right barline with repeat direction: backward
+		//    This would remove any code specializing around looking for specific / incrementing ending numbers, etc. We can have n number of endings, because we just keep inserting the "new collection" until we stop having backward directions and get a new forward direction (if there ever is one)
+		
+		for (int x = 0; x < notes.size(); ++x) {
+			if (notes.get(x) instanceof BarLineNode) {
+				BarLineNode currentBar = (BarLineNode)notes.get(x);
+				System.out.println("Informational only: A repeat bar had been placed here. " + currentBar.toString() + " (NOTE: times are before bpm-multiplier adjustments)");				
+				if (currentBar.getLocation().equalsIgnoreCase("LEFT") && currentBar.getRepeatDir().equalsIgnoreCase("FORWARD")) {
+					// We are at the start of a repeat block! Check if it's the first repeat block with a forward direction, warn if it isn't.
+					if (inRepeat) {
+						// unexpected outcome..? we're already in a repeat and found another left. Don't think musicxml allows for nested repeats. Just keep the innermost one.
+						System.out.println("TransMusicXML#postProcessBarLines - warning - attempt at nested repeats? Using inner repeat, scrapping outer.");						
+					}
+					inRepeat = true;
+					duplicateNotes.clear();
+					repeatLeftTime = currentBar.getStartTime();
+				} else if (currentBar.getLocation().equalsIgnoreCase("RIGHT") && currentBar.getRepeatDir().equalsIgnoreCase("BACKWARD") && inRepeat) {
+					// We have a closing barline to go with a successful opening barline!
+					repeatRightTime = currentBar.getStartTime();
+					startTimeAdjustment += (repeatRightTime - repeatLeftTime); // add the length of time from went the repeated section started and ended, to the total time adjustment for all following notes
+					// TODO since we don't keep track of measures (at all), you may need to find a way to ensure the start time adjustment / repeats start and end on a unit of time
+					//      that is a multiple of the measure length? I guess my concern is we could be slightly off somehow?
+					//      it shouldn't be possible, i mean, we still have rests in this collection, so since we add the full durations of every note, we should be able to mark the exact end.
+					//      this may be a non-issue, it's just really late at night right now.
+
+					// add all dupes within this repeat section to the new collection along with their time adjustment
+					for (int d = 0; d < duplicateNotes.size(); ++d) { // d for dupe
+						NoteNode dupe = (NoteNode)duplicateNotes.get(d);
+						dupe.setStartTime(dupe.getStartTime() + startTimeAdjustment);
+						if (!expandedNotes.add(dupe)) {
+							System.out.println("TransMusicXML#postProcessBarLines - error - failed to add duplicate note to expanded notes collection.");
+							System.out.println("Failed duplicate's values: " + dupe.toString());
+						}
+					}
+					inRepeat = false;
+				} else if (currentBar.getLocation().equalsIgnoreCase("RIGHT") && currentBar.getRepeatDir().equalsIgnoreCase("BACKWARD") && !inRepeat) {
+					// a right bar line telling us to go backwards but we weren't in a repeat. take no action. may need to inspect the xml manually.
+					System.out.println("TransMusicXML#postProcessBarLines - warning - found a closing right BarLine but we weren't in a repeat. Direction: " + currentBar.getRepeatDir());
+					// sometimes we see musicxml ending in a right repeat with no backward direction and no left. is it technically valid?
+					// decision made, not going to bother doing a repeat without a left (wouldn't it just be the whole song again?), hence the inRepeat check.
+				} else {
+					// May be bad / damaged xml data.
+					if (currentBar.getRepeatDir().equalsIgnoreCase("BACKWARD")) {
+						System.out.println("TransMusicXML#postProcessBarLines - Unexpected outcome. BarLine location: " + currentBar.getLocation() +
+										   ", direction: " + currentBar.getRepeatDir() + ", inRepeat: " + inRepeat);
+					}
+				}
+			} else { // it is a step note or a rest
+
+				NoteNode currentNote = (NoteNode)notes.get(x);
+				if (!inRepeat) { // if we aren't currently in a repeat block, then no 'expansion' is needed for this part. just transfer the notes to the new collection with time adjustment (if any)
+					currentNote.setStartTime(currentNote.getStartTime() + startTimeAdjustment);
+					expandedNotes.add(currentNote);
+				} else { // inRepeat
+					// since we're in a repeat block, these notes are being duplicated (we're 'expanding' the repeat block).
+					// one note goes into the 'expanded' collection, and the other note goes into the 'duplicate' collection,
+					// which will be added to the expanded collection once we're at the end of the repeat block and know the (possibly additional) start time adjustment to apply.
+					duplicateNotes.add(new NoteNode(currentNote));
+					currentNote.setStartTime(currentNote.getStartTime() + startTimeAdjustment);
+					expandedNotes.add(currentNote);
+				}
+			}
+		}
+		
+		return expandedNotes;
 	}
 	
 	
