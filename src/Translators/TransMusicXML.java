@@ -605,6 +605,7 @@ public class TransMusicXML {
 				notes = postProcessBarLines(notes);
 			}
 			
+			notes = postProcessCutDuplicates(notes);
 			
 			// Display for manual review while also creating a string representation of our .alc format
 			System.out.println(attrNode + "\n");
@@ -780,6 +781,52 @@ public class TransMusicXML {
 		return expandedNotes;
 	}
 	
+	/**
+	 * Given a collection of Nodes, this method verifies there are no duplicate NoteNodes. If a duplicate is found, it is removed.
+	 * While duplicates may not necessarily cause issues, and may be present in the source musicxml itself (as in the case causing me to write this method),
+	 * I'd rather clean them up and remove them.
+	 * If a NoteNode already exists that starts at the exact same timestamp, with the same properties, then it is a duplicate, don't include it.
+	 * 
+	 * @param notes A cleaned up collection of the passed in notes (any duplicate NoteNodes are excluded)
+	 */
+	public LinkedList<Node> postProcessCutDuplicates(LinkedList<Node> notes) {
+		LinkedList<Node> cleanedNotes = new LinkedList<Node>();
+		
+		for (int x = 0; x < notes.size(); ++x) {
+			NoteNode note = (NoteNode)notes.get(x);
+			
+			// The NoteNode compareTo wasn't working the way I'd expect when I tried checking if "cleanedNotes.contains(note)", dupes were still sneaking in.
+			// Who knows, maybe we have different measure values or something, or repeats are making this harder than it might need to be.
+			// Regardless, that is why there is a brute-forcey nested for-loop to ensure we don't have duplicates.
+			boolean allowIn = true;
+			for (int y = 0; y < cleanedNotes.size() && allowIn; ++y) {
+				NoteNode cleanNote = (NoteNode)cleanedNotes.get(y);
+				
+				if (note.getAlter() == cleanNote.getAlter() &&
+					note.getStartTime() == cleanNote.getStartTime() &&
+					note.getDuration() == cleanNote.getDuration() &&
+					note.getOctave() == cleanNote.getOctave()) {
+
+					// is this a duplicate rest note?
+					if (note.isRest() && cleanNote.isRest()) {
+						allowIn = false;
+					}
+					// is this a duplicate step note?
+					else if (note.getStep() != null && cleanNote.getStep() != null &&
+						note.getStep().equalsIgnoreCase(cleanNote.getStep())) {					
+						allowIn = false;
+					}
+				}
+			}
+			if (allowIn) {
+				cleanedNotes.add(note);
+			} else {
+				System.out.println("TransMusicXML#postProcessCutDuplicates - info - duplicate note cleaned up: " + note);
+			}
+		}
+		
+		return cleanedNotes;
+	}
 	
 	
 }

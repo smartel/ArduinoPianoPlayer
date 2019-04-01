@@ -50,7 +50,7 @@ public class MusicSlice {
 			// So far, I seem to be hitting this with rests (exclusively?), probably because they all have the same compare value of 0.
 			// So you know what? Since rests CAN'T EVEN BE HEARD, and may be the only thing causing this error, I'm only going to issue an error if it is a non-rest, and we can go from there for potential solutions if / when we see the error again.
 			if (note.getCompareValue() != Constants.REST_COMP_VALUE) {
-				System.out.println("MusicSlice#addMusicNote: failed to add MusicNote to notes collection.\r\nMusicSlice startTime: " + startTime + " | Note details: " + note.toString());
+				System.out.println("MusicSlice#addMusicNote: failed to add MusicNote to notes collection. This is likely a duplicate of an existing note.\r\nMusicSlice startTime: " + startTime + " | Note details: " + note.toString());
 			}
 		}
 
