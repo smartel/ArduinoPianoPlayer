@@ -122,4 +122,28 @@ public class MusicSheet {
 	public LinkedList<MusicSlice> getSlices() {
 		return slices;
 	}
+	
+	/**
+	 * Changes the sheet's NoteCount to a new value (useful when modiftying or cleaning up existing sheets)
+	 * @param newCount
+	 */
+	public void setNoteCount(int newCount) {
+		noteCount = newCount;
+	}
+	
+	/**
+	 * Simple getter for infoLine
+	 * @return
+	 */
+	public String getInfoLine() {
+		return infoLine;
+	}
+	
+	/**
+	 * Simple getter for noteCount
+	 * @return
+	 */
+	public int getNoteCount() {
+		return noteCount;
+	}
 }

@@ -37,7 +37,7 @@ public class MusicSlice {
 	}
 	
 	
-	public void addMusicNote(MusicNote note) {
+	public boolean addMusicNote(MusicNote note) {
 		boolean isSuccessful;
 		
 		isSuccessful = notes.add(note);
@@ -54,6 +54,7 @@ public class MusicSlice {
 			}
 		}
 
+		return isSuccessful;
 	}
 	
 	// We shouldn't ever need a method to remove music notes? Since we're just transcribing xml / sheet music to a new format, and not editing the piece.

@@ -21,7 +21,7 @@ import DataObjs.MusicNote;
 import DataObjs.MusicSheet;
 import DataObjs.MusicSlice;
 import DataObjs.PianoProperties;
-import Processors.AlcReader;
+import Processors.AlcReaderWriter;
 import Utils.Constants;
 import Utils.NoteUtils;
 
@@ -91,8 +91,8 @@ public class PianoFeigner extends JFrame {
 			PianoFeigner pf = new PianoFeigner();
 			pf.properties = new PianoProperties(propertiesPath);
 			
-			AlcReader ar = new AlcReader();
-			sheet = ar.loadAlcFile(alcPath);
+			AlcReaderWriter arw = new AlcReaderWriter();
+			sheet = arw.loadAlcFile(alcPath);
 			
 			if (pf.properties.didLoad()) {
 				System.out.println(pf.properties); // for manual inspection of properties
@@ -277,7 +277,7 @@ class PianoPanel extends JPanel {
 				note.feignerDecreaseRemainingDuration(duration);
 				if (note.feignerGetRemainingDuration() > 0) {
 					// only notes that have remaining duration can be kept
-					newSlice.addMusicNote(note);
+					newSlice.addMusicNote(note); // we don't check the returned success boolean flag, because we take no action if it were to fail as a duplicate
 				}
 			}
 		}

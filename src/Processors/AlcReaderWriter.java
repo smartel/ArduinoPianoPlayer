@@ -1,8 +1,12 @@
 package Processors;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.StringTokenizer;
 
 import DataObjs.MusicNote;
@@ -15,9 +19,9 @@ import DataObjs.MusicSlice;
  * 
  * @author smartel
  */
-public class AlcReader {
+public class AlcReaderWriter {
 	
-	public AlcReader() {
+	public AlcReaderWriter() {
 	}
 	
 	/**
@@ -93,7 +97,7 @@ public class AlcReader {
 						slice.addMusicNote(note);
 						prevStartTime = currStartTime;
 					} else {
-						slice.addMusicNote(note);
+						slice.addMusicNote(note); // we don't check the returned success boolean flag, because we take no action if it were to fail as a duplicate
 					}
 					
 					// counter for our file integrity check
@@ -141,5 +145,40 @@ public class AlcReader {
 	//      Actually, it remains to be seen if this is even an issue. How would you write overlapping notes like that on actual sheet music, and play it with one human finger?
 	//       So maybe it'd only occur with bad data / bad translation?
 	
-	
+
+	public boolean writeAlcFile(MusicSheet sheet, String outputPath) {
+		boolean isSuccessful = true;
+		LinkedList<MusicSlice> slices;
+		MusicSlice slice;
+		String line;
+		
+		try {
+			BufferedWriter bw = new BufferedWriter(new FileWriter(new File(outputPath)));
+			bw.write(sheet.getInfoLine());
+			bw.newLine();
+			bw.write(sheet.getNoteCount() + "");
+			bw.newLine();
+			
+			slices = sheet.getSlices();
+			for (int x = 0; x < slices.size(); ++x) {
+				slice = slices.get(x);
+				Iterator<MusicNote> iter = slice.getNotes().iterator();
+				while (iter.hasNext()) {
+					MusicNote note = iter.next();
+					// Generate the line for this MusicNote as it would appear in an .alc file, ie:
+					// {start time in ms} {compareValue} {duration}
+					line = slice.getStartTime() + " " + note.getCompareValue() + " " + note.getDuration();
+					bw.write(line);
+					bw.newLine();
+				}
+			}
+			bw.flush();
+			bw.close();
+		} catch (Exception e) {
+			System.out.println("AlcReaderWriter#writeAlcFile - error - exception caught attempting to write .alc file: " + e.getMessage());
+			e.printStackTrace();
+			isSuccessful = false;
+		}
+		return isSuccessful;
+	}
 }

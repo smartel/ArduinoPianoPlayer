@@ -5,7 +5,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import DataObjs.MusicSheet;
-import Processors.AlcReader;
+import Processors.AlcReaderWriter;
 
 public class MusicSheetTests {
 	
@@ -14,9 +14,9 @@ public class MusicSheetTests {
 		try {
 			MusicSheet sheet;
 			int gcd;
-			AlcReader ar = new AlcReader();
+			AlcReaderWriter arw = new AlcReaderWriter();
 
-			sheet = ar.loadAlcFile(".\\sample musixcml\\for unit tests\\my confession.alc");
+			sheet = arw.loadAlcFile(".\\sample musixcml\\for unit tests\\my confession.alc");
 			gcd = sheet.getGCD();
 			
 			assertTrue(gcd == 145);
@@ -31,9 +31,9 @@ public class MusicSheetTests {
 		try {
 			MusicSheet sheet;
 			int gcd;
-			AlcReader ar = new AlcReader();
+			AlcReaderWriter arw = new AlcReaderWriter();
 
-			sheet = ar.loadAlcFile(".\\sample musixcml\\for unit tests\\my confession-diffgcd.alc");
+			sheet = arw.loadAlcFile(".\\sample musixcml\\for unit tests\\my confession-diffgcd.alc");
 			gcd = sheet.getGCD();
 			
 			assertTrue(gcd == 5);
@@ -64,9 +64,9 @@ public class MusicSheetTests {
 		try {
 			MusicSheet sheet;
 			int endTime;
-			AlcReader ar = new AlcReader();
+			AlcReaderWriter arw = new AlcReaderWriter();
 
-			sheet = ar.loadAlcFile(".\\sample musixcml\\for unit tests\\my confession.alc");
+			sheet = arw.loadAlcFile(".\\sample musixcml\\for unit tests\\my confession.alc");
 			endTime = sheet.getEndTime();
 			
 			assertTrue(endTime == 67280);
@@ -81,9 +81,9 @@ public class MusicSheetTests {
 		try {
 			MusicSheet sheet;
 			int endTime;
-			AlcReader ar = new AlcReader();
+			AlcReaderWriter arw = new AlcReaderWriter();
 
-			sheet = ar.loadAlcFile(".\\sample musixcml\\for unit tests\\my confession-diffenddur.alc");
+			sheet = arw.loadAlcFile(".\\sample musixcml\\for unit tests\\my confession-diffenddur.alc");
 			endTime = sheet.getEndTime();
 			
 			assertTrue(endTime == 67370);
