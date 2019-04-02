@@ -17,6 +17,7 @@ public class NoteTransposer {
 		String targetFilePath; // path to the target input file to translate to .alc / transpose to arduino code
 		String alcFilePath; // path to write the output alc file to (only used if translating from some other format like .musicxml)
 		int bpmMultiplier;
+		boolean isSuccessful = true;
 	
 		// Usage:
 		// 1. file path to desired file to translate, including filename and extension
@@ -44,16 +45,18 @@ public class NoteTransposer {
 				if (targetFilePath.endsWith(".xml") || targetFilePath.endsWith(".musicxml")) {
 					// Call MusicXML translator
 					TransMusicXML transXml = new TransMusicXML();
-					transXml.parseMusicXMLFile(targetFilePath, alcFilePath, bpmMultiplier);
+					isSuccessful = transXml.parseMusicXMLFile(targetFilePath, alcFilePath, bpmMultiplier);
 				}
 				
-				// TODO implement
-				// Step 1. Translate the data file *if needed* (ie musicxml passed in, convert to alc)
-					// a. determine the file format
-					// b. call the appropriate Translator if needed
-					//    ba. see if translating it returned true
-				// Step 2. Read your format into a MusicSheet
-				// Step 3. Determine finger assignments to output a finger file
+				// if supplied with an alc file, or if there was a successful translation of a different file format, we can create arduino code
+				if (targetFilePath.endsWith("alc") || 
+		           ((targetFilePath.endsWith(".xml") || targetFilePath.endsWith(".musicxml")) && isSuccessful) ) {
+
+					// TODO
+					// create the arduino code / finger assignments using the alc file
+					
+				}
+				
 			
 			} catch (NumberFormatException e) {
 				System.out.println("NoteTransposer#main - Please provide a valid integer to use for the bpm-multiplier. Value passed in: [" + args[1] + "]. Gracefully exiting.");

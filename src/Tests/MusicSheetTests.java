@@ -71,7 +71,7 @@ public class MusicSheetTests {
 			sheet = arw.loadAlcFile(".\\sample musixcml\\for unit tests\\my confession.alc");
 			endTime = sheet.getEndTime();
 			
-			assertTrue(endTime == 67280);
+			assertTrue(endTime == 71485);
 		} catch (Exception e) {
 			e.printStackTrace();
 			assertTrue(false);
@@ -88,7 +88,7 @@ public class MusicSheetTests {
 			sheet = arw.loadAlcFile(".\\sample musixcml\\for unit tests\\my confession-diffenddur.alc");
 			endTime = sheet.getEndTime();
 			
-			assertTrue(endTime == 67370);
+			assertTrue(endTime == 80340);
 		} catch (Exception e) {
 			e.printStackTrace();
 			assertTrue(false);

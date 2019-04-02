@@ -1,0 +1,9 @@
+PianoFeigner:
+	1. Note wav files only have 1 duration, and the sound is not stretched or shrunk in relation to the note it is representing.
+	2. When displaying letters on keys, the gui hangs and won't play sound files or respond to hitting the X button to close.
+		This option has temporarily been disabled.
+
+MusicXml translation:
+	1. Double flats and double sharps (alter element values greater than 1) not yet implemented
+	2. Some musicxml DTD's give me a 403 error, until I remove the reference at the top of the musicxml. Then I can process it.
+	3. Sometimes there are entities that fail to resolve, such as "&auml" (any entity like &___), until I remove them from the xml via find and replace all.

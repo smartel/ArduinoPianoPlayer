@@ -11,47 +11,47 @@ public class Constants {
 	// Synonymous notes (A sharp, B flat) exist, but not to the extent of double sharps / double flats.
 	// While "synonyms" exist, ideally it'd be best to stay as accurate as possible with the source material (sheetmusic, xml, ...),
 	//  instead of converting our stored notes to all sharps or all flats.
-	// TODO look into how MusicXML treats double-sharps / double-flats?
-	final public static double A_FLAT_POS = 0.5;
-	final public static double A_POS = 1;
-	final public static double A_SHARP_POS = 1.5;
-	final public static double B_FLAT_POS = 1.5;
-	final public static double B_POS = 2;
+	final public static double A_FLAT_POS = 5.5;
+	final public static double A_POS = 6;
+	final public static double A_SHARP_POS = 6.5;
+	final public static double B_FLAT_POS = 6.5;
+	final public static double B_POS = 7;
 	// B has no sharp, thus C has no flat
-	final public static double C_POS = 3;
-	final public static double C_SHARP_POS = 3.5;
-	final public static double D_FLAT_POS = 3.5;
-	final public static double D_POS = 4;
-	final public static double D_SHARP_POS = 4.5;
-	final public static double E_FLAT_POS = 4.5;
-	final public static double E_POS = 5;
+	final public static double C_POS = 1;
+	final public static double C_SHARP_POS = 1.5;
+	final public static double D_FLAT_POS = 1.5;
+	final public static double D_POS = 2;
+	final public static double D_SHARP_POS = 2.5;
+	final public static double E_FLAT_POS = 2.5;
+	final public static double E_POS = 3;
 	// E has no sharp, thus F has no flat
-	final public static double F_POS = 6;
-	final public static double F_SHARP_POS = 6.5;
-	final public static double G_FLAT_POS = 6.5;
-	final public static double G_POS = 7;
-	final public static double G_SHARP_POS = 7.5;
+	final public static double F_POS = 4;
+	final public static double F_SHARP_POS = 4.5;
+	final public static double G_FLAT_POS = 4.5;
+	final public static double G_POS = 5;
+	final public static double G_SHARP_POS = 5.5;
 	
 	// how much a note increases or decreases in value based on whether it is sharp or flat
 	final public static double SHARP_CHANGE = 0.5;
 	final public static double FLAT_CHANGE = -0.5;
+	// TODO musicxml allows for double-sharps and double-flats by using +2 and -2 alter values respectively. I don't handle this yet.
 	
 	// the length of an octave (in white keys)
 	final public static int OCTAVE_LENGTH = 7;
 	
 	// string representations of each note
-	final public static String NOTE_A = "A";
-	final public static String NOTE_B = "B";
-	final public static String NOTE_C = "C";
+	final public static String NOTE_C = "C"; // start of an octave
 	final public static String NOTE_D = "D";
 	final public static String NOTE_E = "E";
 	final public static String NOTE_F = "F";
 	final public static String NOTE_G = "G";
+	final public static String NOTE_A = "A";
+	final public static String NOTE_B = "B"; // end of an octave
 	final public static String NOTE_REST = "REST";
 	
 	// Standard values when dealing with Rest notes (which don't have an octave, alter, ...)
 	final public static double REST_COMP_VALUE = 0; // A rest note has a compare value of 0.0, as it has no step, no octave, no alter, ...
-	final public static int REST_OCTAVE_VALUE = 0;
+	final public static int REST_OCTAVE_VALUE = -1; // octave 0 is a valid octave, so we need to go down 1 more
 	final public static double REST_ALTER_VALUE = 0;
 	
 	// Piano Feigner (gui) key sizes
@@ -77,10 +77,10 @@ public class Constants {
 
 	// Assumed max number of keys there will be on a physical piano
 	final public static int MAX_PIANO_KEYS = 88;
-	// Assumed max octave value that will be on a physical piano
-	final public static int MAX_PIANO_OCTAVE = 8;
-	// Assumed min octave value that will be on a physical piano
-	final public static int MIN_PIANO_OCTAVE = 1;
+	// Assumed max octave value that will be on a physical piano (this is also the max octave value per midi format. musicxml allows up to octave 9.)
+	final public static int MAX_PIANO_OCTAVE = 10;
+	// Assumed min octave value that will be on a physical piano (this is also the lowest octave value per midi format)
+	final public static int MIN_PIANO_OCTAVE = 0;
 	
 	// Properties-file settings:
 	 // the number of fields that are expected in a Properties file. If the count doesn't match at runtime, we'll throw an error.

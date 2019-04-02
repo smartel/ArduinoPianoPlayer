@@ -52,6 +52,7 @@ public class AlcAlterer {
 	
 
 	// Potential unimplemented change ideas are:
+	// x. shift left or right by x steps / tones? including half steps, i mean, go from an f to an f sharp? or be able to change from a major key to minor key and so on?
 	// x. I'm not sure how easy it would be to mark a section of the alc file for deletion. Like, say you wanted to delete all notes that start from 1400ms to 1800ms in a song.
 	//    You'd need to be able to specify a start point, an end point, and then the program would mass update the start times of every note after 1800ms to what, start 400ms earlier?
 	//    Not sure how valuable this would be yet.

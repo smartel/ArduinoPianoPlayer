@@ -32,34 +32,13 @@ import Utils.NoteUtils;
 	// then it will be drawn with a different color. trying to click on a piano key will not produce an effect.
 	// when it paints, it is just showing the state of the piano at one given point in time.
 	// the feigner is meant to be continuously redrawing itself, to show live playing.
-	// TODO HUGE UNANSWERED QUESTION:
-	// When the .alc file is transposed into arduino code, it could be as simple as, say, "finger 8, hold note xyz for n duration"
-	// and other fingers will be given their own notes and durations.
-	// However, consider the following example:
-	// Finger 8, hold your note for 10 seconds
-	// And then 2 seconds later:
-	// Finger 2, hold your note for 3 seconds
-	// While those are simple >push >wait for x >retract operations on each finger in the arduino, the Feigner will need to know to keep showing finger 8's hold
-	// even though it wouldn't technically be in the same MusicSlice
-	// WHERE DO WE WANT TO FIX THIS?
-	// While I haven't reached the arduino step yet, I anticipate this is a problem solely for the Feigner.
-	// So we'd want to handle it here only, and not potentially mess up the arduino's operations?
-	// Perhaps MusicSlices need a timestamp on them. When we add a new MusicSlice here, it compares it to the current one via comparing both timestamps.
-	// If there are notes in the first music slice that would STILL BE PLAYING in the new music slice, perhaps we add them to the new slice object here with their remaining time.
-    // If we do need to bring that solution to arduino (once we get there), we'll already have the solution here too.
-	// Although admittedly it feels junky to handle MusicSlices different ways in 2 different places. But we don't want to break a note held for 10 seconds into a ton of separate
-	// key presses for the finger either, because that would sound vastly different. We're just trying to solve a potential display issue.
 
 	// look of the gui:
-	// how would the feigner gui look? topdown view of a piano, or sheet music view?
-	// one could open the musicxml in any sheet music program, so that'd be redundant
-	// let's do a topdown view, we could highlight which keys are being hit during playback, which will easily show all notes in a chord
+	// topdown view of a piano, highlighting which keys are being hit during playback, which will easily show all notes in a chord
 	
 	// audio of the gui:
-	// we could capture audio of all of your pianos keys (held for a long duration), so the gui can play them back (and chomp them early if needed)
-	// could store each note audio file under its compareValue ? so we don't worry if a given sound is a G sharp or A flat etc
-	// not sure how chords will sound / if they'll cut each other off / not sound right
-	// we could have a toggle for voice - something like a radio button, options are piano and orgel (my favorite voice when I would record my own playing)
+	// captured audio of all my pianos keys, but unfortunately they only have 1 duration because we just play raw .wav files
+	// a piano_properties setting can be changed to swap the voice the piano plays in
 
 /**
  * Basic gui that shows the top-down view of a piano keyboard, showing how a song will play (given an .alc file) in real time.
@@ -119,46 +98,26 @@ public class PianoFeigner extends JFrame {
 		rollingTime = 0;
 		int delay;
 
+		// TODO
+		// The gui is hanging when DISPLAY_LETTERS is set to true. The gui won't close normally on exit, and it won't play sound / highlight keys after the first.
+		// Need to look into. Temporarily force-disabling this setting for now.
+		showLetters = false;
+		/*
 		if (properties.getSetting(Constants.SETTINGS_DISPLAY_LETTERS).equalsIgnoreCase("1")) {
 			showLetters = true;
-			// seems like the gui hangs when set to true? can't exit out of the program by clicking the [X] exit button anymore. TODO look into..?
 		} else {
 			showLetters = false;
-		}
+		}*/
 		
 		// TODO perhaps we should make a radio button for voice, instead of having it in the Settings file?
 		// TODO and perhaps a "Start" button instead of it immediately jumping into playback when you run the application?
 		//      After you hit start, we could then replace the button with a "Pause" button, so hitting it again would stop playback. When it is paused,
-		//      we could then turn the button into a "Restart" button, and hitting it again could restart the playback from the beginning. just some ideas.
+		//      we could then turn the button into a "Restart" or "Resume" button (or both), and hitting restart again could restart the playback from the beginning. just some ideas.
 
 		
 		PianoPanel pianoPanel = new PianoPanel(numWhiteKeys, numBlackKeys, firstNote, firstOctave, showLetters);
 		add(pianoPanel);
 		
-		
-		
-		// TODO
-		// test implementation - every second, grab the next music slice, draw it, and play the sound effects.
-		// the real delay will need to be determined for the final implemention. i guess we'll need to find a way to have a non-changing delay between slices.
-		
-		// TODO having a non-changing delay between slices actually presents a big issue for the PianoFeigner, that shouldn't impact the arduino.
-		//      The expected implementation was that the collection would just store start durations and length durations, so one slight could start at 1000ms, another could
-		//      start at 2000ms, another at 5000ms, and so on. If we need a constant value, 1000ms would work, but since there are no entries for 3000ms and 4000ms,
-		//      it means we skip seconds ahead in the song and go straight from 2000ms to 5000ms in only 1000ms.
-		//      This is because the feigner currently just non-intelligently skips to the next MusicSlice option on a constant delay.
-		//      The error is, the next MusicSlice may have notes that have a start duration LARGER than that constant delay.
-		//      I would rather not manipulate the .alc output file, especially if the issue would only be present in the PianoFeigner gui.
-		//      Potential solutions:
-		//      We could have the reader determine a "lowest common duration" that can fit between every timeslice, whether it is 1 seconds, or 250ms, or what have you.
-		//       (Alternatively, it could be stored on the count line as another integrity check, but I'm not sure if that's particularly desirable, especially with hand-editing in mind)
-		//      It could then fill the MusicSheet with dummy MusicSlice options (like in the above example, at 3000ms and 4000ms), with rest notes. This way,
-		//      no sound is played, and because we have the LiveSlice object in the PianoPanel, notes that started at 1000ms and 2000ms will continue to play / roll over
-		//      if their hold durations were sufficiently large.
-		// TODO wait a sec, you never even look at the StartDuration either, you just load the next MusicSLice right up. oh boy.
-		//      maybe, since we have a timer, just have a rolling >time within the song, and you can send an empty new MusicSlice if the next slice in the collection's
-		//      start duration is greater than the rolling duration. And if it matches, then you pass the one from the collection on to play sounds / display.
-		//      htis means we dont need empty garbage in the collection either.
-		//      JUST CONSIDERING MULTIPLE OPTIONS. But don't leave >StartDuration unused.
 		delay = sheet.getGCD();
 		if (delay == -1 || delay == 0) {
 			System.out.println("PianoFeigner#execute - Failed to generate a valid greatest-common-divisor between the MusicSlices, so playback is aborted. Delay: " + delay);
@@ -309,14 +268,14 @@ class PianoPanel extends JPanel {
 		// Check all inputs for valid values
 		
 		// Determine where you are in the pattern.
-		// We'll map the letters to numbers ie A=1, B=2, ... G=7, and use conditionals to know when to skip.
+		// We'll map the letters to numbers ie C=1, D=2, ... B=7, and use conditionals to know when to skip.
 		patternPosition = NoteUtils.getPositionForNote(firstKey);
 		if (patternPosition == -1) {
 			System.out.println("PianoFeigner.PianoPanel#doDrawing - invalid first note of piano given. firstKey: " + firstKey);
 		}
 		
 		// ensure the supplied octave is valid
-		if (firstOctave <= 0) {
+		if (firstOctave < Constants.MIN_PIANO_OCTAVE) {
 			System.out.println("PianoFeigner.PianoPanel#doDrawing - invalid octave value given. firstOctave: " + firstOctave);
 		}
 		currentOctave = firstOctave;

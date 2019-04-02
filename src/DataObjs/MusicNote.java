@@ -11,12 +11,12 @@ import Utils.NoteUtils;
 public class MusicNote implements Comparable<MusicNote> {
 
 	/**
-	 * Which Note (A,B,C,D,E,F,G) to hit
+	 * Which Note (C,D,E,F,G,A,B) to hit
 	 */
 	private String note;
 	
 	/**
-	 * Which octave the note is in
+	 * Which octave the note is in. Note, octaves start on C and end on B.
 	 */
 	private int octave;
 	
@@ -50,17 +50,15 @@ public class MusicNote implements Comparable<MusicNote> {
 	 * Constructs the note using the octave and a String note value (for example, octave 2 "C"), with flags for whether the note is sharp or flat.
 	 * We maintain the exact note that is sharp or flat, rather than try to guess it, so as to be accurate with the source file (such as sheet music or a MusicXML file).
 	 * If for any reason the note can't be created (such as both the sharp and flat flags being set to true), then an error will be logged and an exception thrown.
-	 * @param note The specific note (A,B,C,D,E,F,G) to hit (ignoring half-steps). Additionally, "REST" is accepted here as a Rest note.
-	 * @param octave The octave the note is in (1-x)
+	 * @param note The specific note (C,D,E,F,G,A,B) to hit (ignoring half-steps). Additionally, "REST" is accepted here as a Rest note.
+	 * @param octave The octave the note is in (0-10)
 	 * @param duration The duration the note should be played for, in milliseconds
 	 * @param isSharp a flag indicating whether the note is a sharp. if true, the note is treated as a sharp
 	 * @param isFlat a flag indicating whether the note is a flat. if false, the note is treated as a flat
 	 */
 	public MusicNote(String note, int octave, int duration, boolean isSharp, boolean isFlat) {
 		
-		// TODO should we check if we get a combination such as B sharp, E sharp, C flat, F flat here? and throw in this case?
-		//      it shouldn't be possible, but it could happen as a bug from any of the translators or perhaps from the source music data.
-		//      going to manually promote / demote the note to the appropriate natural note, and leaving these warning messages in to see if it ever does occur.
+		// If we get an "impossible" note from some source material (such as a B sharp or E flat), promote or demote the note as necessary to its neighbor.
 		if ( (note.equalsIgnoreCase(Constants.NOTE_B) && isSharp) ||
 			 (note.equalsIgnoreCase(Constants.NOTE_E) && isSharp) ||
 			 (note.equalsIgnoreCase(Constants.NOTE_C) && isFlat) ||
@@ -68,17 +66,20 @@ public class MusicNote implements Comparable<MusicNote> {
 			System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - had a sharp B or sharp E, or a flat C or flat F. Confirm - note: " + note +
 					           ", isSharp: " + isSharp + ", isFlat: " + isFlat);
 			// promote the note to the appropriate natural note (B sharp becomes C natural, E sharp becomes F natural, C flat becomes B natural, F flat becomes E natural)
+			// note that when a B is promoted to a C, we increment the octave by 1, since octaves start on C. Likewise for demoting from C to B and decrementing octave by 1.
 			isSharp = false;
 			isFlat = false;
 			if (note.equalsIgnoreCase(Constants.NOTE_B)) {
 				System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - note has been promoted to a C natural");
 				note = Constants.NOTE_C;
+				++octave;
 			} else if (note.equalsIgnoreCase(Constants.NOTE_E)) {
 				System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - note has been promoted to a F natural");
 				note = Constants.NOTE_F;
 			} else if (note.equalsIgnoreCase(Constants.NOTE_C)) {
 				System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - note has been demoted to a B natural");
 				note = Constants.NOTE_B;
+				--octave;
 			} else if (note.equalsIgnoreCase(Constants.NOTE_F)) {
 				System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - note has been demoted to an E natural");
 				note = Constants.NOTE_E;
@@ -92,8 +93,8 @@ public class MusicNote implements Comparable<MusicNote> {
 	
 	/**
 	 * Overloaded constructor that assumes the note is neither sharp nor flat
-	 * @param note The specific note (A,B,C,D,E,F,G) to hit (ignoring half-steps). Additionally, "REST" is accepted as a Rest note.
-	 * @param octave The octave the note is in (1-x)
+	 * @param note The specific note (C,D,E,F,G,A,B) to hit (ignoring half-steps). Additionally, "REST" is accepted as a Rest note.
+	 * @param octave The octave the note is in (0-10)
 	 * @param duration The duration the note should be played for, in milliseconds
 	 */
 	public MusicNote(String note, int octave, int duration) {
@@ -138,7 +139,7 @@ public class MusicNote implements Comparable<MusicNote> {
 			}
 			// End result: a whole-number "temp" compare value.
 			// Next, we'll shave off octaves 1 at a time, increasing the octave count each time, until we are left with a note position, which can be used to directly get the note letter.
-			octave = 1;
+			octave = 0;
 			while (tempCompValue > 7) {
 				tempCompValue -= 7;
 				++octave;
@@ -146,8 +147,8 @@ public class MusicNote implements Comparable<MusicNote> {
 			note = NoteUtils.getNoteForPosition((int)tempCompValue);
 		}
 		
-		// TODO should we check if we get a combination such as B sharp, E sharp, C flat, F flat here? and throw in this case?
-		//      it shouldn't be possible, but it could happen as a bug from any of the translators or perhaps from the source music data.
+		// Check if we have an impossible note, but since we were trying to build from a compareValue, we can't be sure whether to promote or demote
+		// (we don't know if they were trying to make a C become a flat (a B), or a B become a sharp (a C)
 		if ( (note.equalsIgnoreCase(Constants.NOTE_B) && isSharp) ||
 			 (note.equalsIgnoreCase(Constants.NOTE_E) && isSharp) ||
 			 (note.equalsIgnoreCase(Constants.NOTE_C) && isFlat) ||
@@ -159,27 +160,6 @@ public class MusicNote implements Comparable<MusicNote> {
 			// We're just going to set a compare value of -1 and error out, we don't have a way to 100% guarantee what this note should really be.
 			compareValue = -1;
 			// TODO throw exception?
-			
-			/*
-			System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - had a sharp B or sharp E, or a flat C or flat F. Confirm - note: " + note +
-					           ", isSharp: " + isSharp + ", isFlat: " + isFlat);
-			// promote the note to the appropriate natural note (B sharp becomes C natural, E sharp becomes F natural, C flat becomes B natural, F flat becomes E natural)
-			isSharp = false;
-			isFlat = false;
-			if (note.equalsIgnoreCase(Constants.NOTE_B)) {
-				System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - note has been promoted to a C natural");
-				note = Constants.NOTE_C;
-			} else if (note.equalsIgnoreCase(Constants.NOTE_E)) {
-				System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - note has been promoted to a F natural");
-				note = Constants.NOTE_F;
-			} else if (note.equalsIgnoreCase(Constants.NOTE_C)) {
-				System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - note has been demoted to a B natural");
-				note = Constants.NOTE_B;
-			} else if (note.equalsIgnoreCase(Constants.NOTE_F)) {
-				System.out.println("MusicNote#ctor(note,octave,duration,isSharp,isFlat) - warning - note has been demoted to an E natural");
-				note = Constants.NOTE_E;
-			}
-			*/
 		} else {
 			initializeNote(note, octave, duration, isSharp, false);
 			// TODO throw if initializeNote returns false?
@@ -202,8 +182,8 @@ public class MusicNote implements Comparable<MusicNote> {
 	
 	/**
 	 * Attempts to initialize the note with the given parameters. If it fails, an error is logged and an exception thrown
-	 * @param note The specific note (A,B,C,D,E,F,G) to hit (ignoring half-steps)
-	 * @param octave The octave the note is in (1-x)
+	 * @param note The specific note (C,D,E,F,G,A,B) to hit (ignoring half-steps)
+	 * @param octave The octave the note is in (0-10)
 	 * @param duration The duration the note should be played for, in milliseconds
 	 * @param isSharp a flag indicating whether the note is a sharp. if true, the note is treated as a sharp
 	 * @param isFlat a flag indicating whether the note is a flat. if false, the note is treated as a flat
@@ -236,25 +216,26 @@ public class MusicNote implements Comparable<MusicNote> {
 		}
 		
 		// Ensure the note is a valid piano key
-		if ( (!note.equalsIgnoreCase(Constants.NOTE_A)) &&
-			 (!note.equalsIgnoreCase(Constants.NOTE_B)) &&
-			 (!note.equalsIgnoreCase(Constants.NOTE_C)) &&
+		if ( (!note.equalsIgnoreCase(Constants.NOTE_C)) &&
 			 (!note.equalsIgnoreCase(Constants.NOTE_D)) &&
 			 (!note.equalsIgnoreCase(Constants.NOTE_E)) &&
 			 (!note.equalsIgnoreCase(Constants.NOTE_F)) &&
 			 (!note.equalsIgnoreCase(Constants.NOTE_G)) &&
+			 (!note.equalsIgnoreCase(Constants.NOTE_A)) &&
+			 (!note.equalsIgnoreCase(Constants.NOTE_B)) &&
 			 (!note.equalsIgnoreCase(Constants.NOTE_REST)) ) {
 			System.out.println("MusicNote#initializeNote - failed to initialize - unrecognized note value passed in.\r\nnote: " + note);
 			isSuccessful = false;
 		}
 		
 		// Ensure the note has a non-zero / non-negative octave, if it is not a rest note
-		if (octave <= 0 && (!note.equalsIgnoreCase(Constants.NOTE_REST))) {
-			System.out.println("MusicNote#initializeNote - failed to initialize - invalid octave value (0 or negative) for a non-rest note.\r\noctave: " + octave);
+		if (octave < Constants.MIN_PIANO_OCTAVE && (!note.equalsIgnoreCase(Constants.NOTE_REST))) {
+			System.out.println("MusicNote#initializeNote - failed to initialize - invalid octave value (negative) for a non-rest note.\r\noctave: " + octave);
 			isSuccessful = false;
 		}
+		
 		// Ensure the octave is zero if it is a rest note, but if it isn't, we only need to provide a warning, and can keep initializing
-		if (octave != 0 && (note.equalsIgnoreCase(Constants.NOTE_REST))) {
+		if (octave != Constants.REST_OCTAVE_VALUE && (note.equalsIgnoreCase(Constants.NOTE_REST))) {
 			System.out.println("MusicNote#initializeNote - warning - non-zero octave value provided for a rest note. Octave value ignored.\r\noctave: " + octave);
 		}
 		

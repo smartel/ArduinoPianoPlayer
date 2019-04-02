@@ -446,10 +446,6 @@ public class TransMusicXML {
 			// 2. update the rolling duration (aka our current time location within the song) by the current note's duration only if it isn't part of a chord.
 			//    2a. if the note IS part of a chord, then its duration is already accounted for in the rolling duration. HOWEVER, since it is part of a chord with the previous note,
 			//        we still need it to start at the same time as the previous note, so set its start time to the "previous" start time instead. 
-			// TODO - is it possible for an individual note within a chord in musicxml to have a duration longer than any other note in the chord?
-			//        If so, do we need to find the maximum duration?
-			// TODO if a new note is added afterwards that is not part of this chord, but lies in a position between the previous note's start time but also before its duration ends,
-			//       then will the xml account for it by "backing up" to correctly set the right start location?
 			if (qName.equalsIgnoreCase("note")) {
 				if (currentNote.isChord) {
 					currentNote.setStartTime(previousStartTime);
@@ -687,6 +683,12 @@ public class TransMusicXML {
 			System.out.println("Exception caught attempting to translate MusicXML file: " + xmlFilePath + "\r\nStack trace:\r\n");
 			e.printStackTrace();
 			isSuccessful = false; // ensuring we return false
+		}
+		
+		if (isSuccessful) {
+			System.out.println("\nTransMusicXML - Translation successfully completed.");
+		} else {
+			System.out.println("\nTransMusicXML - Translation failed.");
 		}
 		
 		return isSuccessful;

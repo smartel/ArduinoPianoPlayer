@@ -133,18 +133,6 @@ public class AlcReaderWriter {
 	}
 
 
-	// TODO potential issue:
-	//      we hadn't considered what would happen if we had input like the below:
-	//      1000 7.0 5000
-	//      2000 7.0 1000
-	//      Translated, that would mean 1 second into the song, we play a G for 5 seconds. But then the next line says to play a G for 1 second, at the 2 second point in the song.
-	//      Not entirely sure how this is handled in production yet, and not sure what we want the desired outcome to be (re: finish the first note and don't add the second,
-	//       or chomp the first note and have it be cut off by the second, which will play for its full duration)
-	//      Presumably, the PianoFeigner could just open 2 audio clips (if it successfully adds both to the LiveSlice and doesn't break trying to display them both as hit), 1 clip for each,
-	//      but what about the Arduino finger(s)?
-	//      Actually, it remains to be seen if this is even an issue. How would you write overlapping notes like that on actual sheet music, and play it with one human finger?
-	//       So maybe it'd only occur with bad data / bad translation?
-	
 
 	public boolean writeAlcFile(MusicSheet sheet, String outputPath) {
 		boolean isSuccessful = true;
