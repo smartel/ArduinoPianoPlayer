@@ -187,6 +187,20 @@ public class MusicNote implements Comparable<MusicNote> {
 	}
 	
 	/**
+	 * Simple copy constructor
+	 * @param other
+	 */
+	public MusicNote(MusicNote other) {
+		this.note = new String(other.note);
+		this.octave = other.octave;
+		this.isSharp = other.isSharp;
+		this.isFlat = other.isFlat;
+		this.duration = other.duration;
+		this.compareValue = other.compareValue;
+		this.remainingDuration = other.remainingDuration; // as things stand this shouldn't ever be needed, but erring on the side of caution
+	}
+	
+	/**
 	 * Attempts to initialize the note with the given parameters. If it fails, an error is logged and an exception thrown
 	 * @param note The specific note (A,B,C,D,E,F,G) to hit (ignoring half-steps)
 	 * @param octave The octave the note is in (1-x)
@@ -278,8 +292,28 @@ public class MusicNote implements Comparable<MusicNote> {
 		return duration;
 	}
 	
+	/**
+	 * Simple getter for compareValue
+	 * @return
+	 */
 	public double getCompareValue() {
 		return compareValue;
+	}
+	
+	/**
+	 * Simple getter for octave
+	 * @return
+	 */
+	public int getOctave() {
+		return octave;
+	}
+	
+	/**
+	 * Simple getter for note
+	 * @return
+	 */
+	public String getNote() {
+		return note;
 	}
 	
 	/**
@@ -300,6 +334,55 @@ public class MusicNote implements Comparable<MusicNote> {
 		return details;
 	}
 	
+	/**
+	 * Given a new bpm multiplier, multiply the note's duration by the amount.
+	 * It is expected that the note's start time will also be multiplied by the same amount within its MusicSlice. 
+	 * @param bpmMult positive integer value to multiply the note's duration by
+	 * @return true if successful, false otherwise
+	 */
+	public boolean applyBpmMultipler(int bpmMult) {
+		boolean isSuccessful = true;
+		if (bpmMult <= 0) {
+			isSuccessful = false;
+		} else {
+			duration *= bpmMult;
+		}
+		return isSuccessful;
+	}
+	
+	/**
+	 * Given an octave adjustment (a positive or negative integer), add it to the current octave value.
+	 * If the octave would be pushed below 1 or above 8, then at this moment we will keep it at 1 or 8 rather than deleting the note, unless the delete flag is set.
+	 * If the delete flag is set, then we will turn the note into a rest if it goes past a boundary, effectively deleting it.
+	 * @param octaveAmt non-zero integer value to add to the note's current octave value.
+	 * @param doDeleteNotesPastBoundary if true, if an octave goes below the minimum octave range (1) or above the maximum octave range (8), we'll turn it into a rest to "delete" it.
+	 * @return true if successful, false if it attempted to go below octave 1 or above octave 8, while still keeping it at octave 1 or 8.
+	 */
+	public boolean applyOctaveAdjustment(int octaveAmt, boolean doDeleteNotesPastBoundary) {
+		boolean hitBound = false;
+		
+		octave += octaveAmt;
+		
+		if (octave < Constants.MIN_PIANO_OCTAVE) {
+			hitBound = true;
+			octave = Constants.MIN_PIANO_OCTAVE;
+		} else if (octave > Constants.MAX_PIANO_OCTAVE) {
+			hitBound = true;
+			octave = Constants.MAX_PIANO_OCTAVE;
+		}
+		
+		if (hitBound && doDeleteNotesPastBoundary) {
+			note = Constants.NOTE_REST;
+			octave = Constants.REST_OCTAVE_VALUE;
+			compareValue = Constants.REST_COMP_VALUE;
+			isSharp = false; // rest alter is 0
+			isFlat = false; // rest alter is 0
+		} else {
+			compareValue = NoteUtils.generateCompareValue(note, octave, isSharp, isFlat);
+		}
+		
+		return hitBound;
+	}
 	
 	
 	// Methods used purely by the PianoFeigner to know how long to display the note as held in the GUI.

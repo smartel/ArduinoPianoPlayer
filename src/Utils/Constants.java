@@ -79,6 +79,8 @@ public class Constants {
 	final public static int MAX_PIANO_KEYS = 88;
 	// Assumed max octave value that will be on a physical piano
 	final public static int MAX_PIANO_OCTAVE = 8;
+	// Assumed min octave value that will be on a physical piano
+	final public static int MIN_PIANO_OCTAVE = 1;
 	
 	// Properties-file settings:
 	 // the number of fields that are expected in a Properties file. If the count doesn't match at runtime, we'll throw an error.
@@ -114,4 +116,8 @@ public class Constants {
 	// last octave (determined from total)
 	public static final String SETTINGS_LAST_OCTAVE = "LAST_OCTAVE";
 	
+	// AlcAlterer options
+	public static final String BPM_OPTION = "BPM";
+	public static final String OCTAVE_OPTION = "OCTAVE";
+	public static final String LOOP_OPTION = "LOOP";
 }

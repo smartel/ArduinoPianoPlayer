@@ -38,6 +38,20 @@ public class MusicSheet {
 	}
 	
 	/**
+	 * Simple copy constructor. Will also copy all MusicSlices and MusicNotes.
+	 * @param other
+	 */
+	public MusicSheet(MusicSheet other) {
+		slices = new LinkedList<MusicSlice>();
+		this.infoLine = other.infoLine;
+		this.noteCount = other.noteCount;
+		
+		for (int x = 0; x < other.slices.size(); ++x) {
+			slices.add(new MusicSlice(other.slices.get(x)));
+		}
+	}
+	
+	/**
 	 * Generates and returns the greatest-common-divisor for all of the MusicSlice's start durations.
 	 * The PianoFeigner will rely on this duration for looping over the MusicSlices and repainting and playing sound files at appropriate times.
 	 * @return greatest-common-divisor of all the MusicSlice's start durations, in milliseconds, or -1 if it fails for any reason (empty collection, ...)
@@ -137,6 +151,13 @@ public class MusicSheet {
 	 */
 	public String getInfoLine() {
 		return infoLine;
+	}
+	
+	/**
+	 * Simple setter for updating the infoLine (ideally to append more information)
+	 */
+	public void setInfoLine(String info) {
+		infoLine += info;
 	}
 	
 	/**

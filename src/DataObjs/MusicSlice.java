@@ -36,6 +36,22 @@ public class MusicSlice {
 		}
 	}
 	
+	/**
+	 * Simple copy constructor. Will also copy all MusicNotes
+	 * @param other
+	 */
+	public MusicSlice(MusicSlice other) {
+		notes = new TreeSet<MusicNote>();
+		this.startTime = other.startTime;
+		
+		Iterator<MusicNote> iter = other.notes.iterator();
+		while (iter.hasNext()) {
+			MusicNote note = iter.next();
+			MusicNote noteCopy = new MusicNote(note);
+			notes.add(noteCopy);
+		}
+	}
+	
 	
 	public boolean addMusicNote(MusicNote note) {
 		boolean isSuccessful;
@@ -58,6 +74,33 @@ public class MusicSlice {
 	}
 	
 	// We shouldn't ever need a method to remove music notes? Since we're just transcribing xml / sheet music to a new format, and not editing the piece.
+	
+	/**
+	 * Given a new bpm multiplier, multiply the note's duration by the amount.
+	 * It is expected that the note's start time will also be multiplied by the same amount within its MusicSlice. 
+	 * @param bpmMult positive integer value to multiply the song's duration by
+	 * @return true if successful, false otherwise
+	 */
+	public boolean applyBpmMultipler(int bpmMult) {
+		boolean isSuccessful = true;
+		if (bpmMult <= 0) {
+			isSuccessful = false;
+		} else {
+			// adjust the slice's start time
+			startTime *= bpmMult;
+			
+			// adjust all of the slice's notes' durations
+			Iterator<MusicNote> iter = notes.iterator();
+			while (iter.hasNext()) {
+				MusicNote note = iter.next();
+				isSuccessful = note.applyBpmMultipler(bpmMult);
+				if (isSuccessful == false) {
+					break;
+				}
+			}
+		}
+		return isSuccessful;
+	}
 	
 
 	/**
@@ -96,4 +139,11 @@ public class MusicSlice {
 		return startTime;
 	}
 	
+	/**
+	 * Setter for "start time" in milliseconds (how far into the song until the notes are hit)
+	 * @return startTime
+	 */
+	public void setStartTime(int start) {
+		startTime = start;
+	}
 }

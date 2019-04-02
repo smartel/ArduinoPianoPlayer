@@ -10,8 +10,6 @@ import DataObjs.MusicSlice;
 
 public class MusicSliceTests {
 
-	// TODO tbd. basically confirm the compareTo works
-	
 	@Test
 	public void testContainsNoteSuccess() {
 		MusicSlice slice = new MusicSlice(0);
@@ -65,5 +63,54 @@ public class MusicSliceTests {
 		assertTrue(slice.getStartTime() == 10);
 		assertTrue(didAdd1);
 		assertFalse(didAdd2);
+	}
+	
+	
+	// BPM Adjustment tests
+	
+	@Test
+	public void testAdjustBpmPositive() {
+		MusicSlice slice = new MusicSlice(10);
+		slice.applyBpmMultipler(10);
+		assertTrue(slice.getStartTime() == 100);
+	}
+	
+	@Test
+	public void testAdjustBpmNegative() {
+		MusicSlice slice = new MusicSlice(10);
+		slice.applyBpmMultipler(-10);
+		assertTrue(slice.getStartTime() == 10);
+	}
+	
+	@Test
+	public void testAdjustBpmZero() {
+		MusicSlice slice = new MusicSlice(10);
+		slice.applyBpmMultipler(0);
+		assertTrue(slice.getStartTime() == 10);
+	}
+	
+	@Test
+	public void testAdjustBpmOne() {
+		MusicSlice slice = new MusicSlice(10);
+		slice.applyBpmMultipler(1);
+		assertTrue(slice.getStartTime() == 10);
+	}
+	
+	// Copy constructor test
+	
+	@Test
+	public void testCopyConstructor() {
+		// Create a slice with 1 note
+		MusicSlice slice = new MusicSlice(0);
+		MusicNote note = new MusicNote("A", 1, 1, false, false);
+		boolean didAdd = slice.addMusicNote(note);		
+		boolean doesContain = slice.containsNote(note.getCompareValue());
+		assertTrue(doesContain);
+		assertTrue(didAdd);
+		
+		// Now copy the slice and ensure all the values match and that the note was also copied
+		MusicSlice other = new MusicSlice(slice);
+		assertTrue(slice.getStartTime() == other.getStartTime());
+		assertTrue(other.containsNote(note.getCompareValue()));
 	}
 }

@@ -451,4 +451,125 @@ public class MusicNoteTests {
 		assertTrue(validCompVal);
 	}
 	
+	
+	// BPM Adjustment tests
+	
+	@Test
+	public void testBpmPositive() {
+		MusicNote note = new MusicNote("A", 2, 2, false, false);
+		note.applyBpmMultipler(10);
+		assertTrue(note.getDuration() == 20);
+	}
+
+	@Test
+	public void testBpmNegative() {
+		MusicNote note = new MusicNote("A", 2, 2, false, false);
+		note.applyBpmMultipler(-10);
+		assertTrue(note.getDuration() == 2);
+	}
+
+	@Test
+	public void testBpmZero() {
+		MusicNote note = new MusicNote("A", 2, 2, false, false);
+		note.applyBpmMultipler(0);
+		assertTrue(note.getDuration() == 2);
+	}
+
+	@Test
+	public void testBpmOne() {
+		MusicNote note = new MusicNote("A", 2, 2, false, false);
+		note.applyBpmMultipler(1);
+		assertTrue(note.getDuration() == 2);
+	}
+	
+	// Octave Adjustment tests
+	
+	@Test
+	public void testOctavePositiveInBounds() {
+		MusicNote note = new MusicNote("A", 2, 2, false, false);
+		note.applyOctaveAdjustment(2, true);
+		assertTrue(note.getOctave() == 4);
+	}
+	@Test
+	public void testOctavePositiveLandOnBounds() {
+		MusicNote note = new MusicNote("A", 2, 2, false, false);
+		note.applyOctaveAdjustment(6, true);
+		assertTrue(note.getOctave() == 8);
+	}
+	@Test
+	public void testOctavePositiveOverBoundsBy1Cap() {
+		MusicNote note = new MusicNote("A", 4, 2, false, false);
+		note.applyOctaveAdjustment(5, false);
+		assertTrue(note.getOctave() == 8); // it capped at the boundary
+	}
+	public void testOctavePositiveOverBoundsByALotCap() {
+		MusicNote note = new MusicNote("A", 4, 2, false, false);
+		note.applyOctaveAdjustment(20, false);
+		assertTrue(note.getOctave() == 8); // it capped at the boundary
+	}
+	@Test
+	public void testOctavePositiveOverBoundsBy1Delete() {
+		MusicNote note = new MusicNote("A", 2, 2, false, false);
+		note.applyOctaveAdjustment(7, true);
+		assertTrue(note.getOctave() == 0);
+		assertTrue(note.getCompareValue() == 0); // it became a rest, effectively deleted
+	}
+	@Test
+	public void testOctavePositiveOverBoundsByALotDelete() {
+		MusicNote note = new MusicNote("A", 2, 2, false, false);
+		note.applyOctaveAdjustment(20, true);
+		assertTrue(note.getOctave() == 0);
+		assertTrue(note.getCompareValue() == 0); // it became a rest, effectively deleted
+	}
+	
+	@Test
+	public void testOctaveNegativeInBounds() {
+		MusicNote note = new MusicNote("A", 4, 4, false, false);
+		note.applyOctaveAdjustment(-1, true);
+		assertTrue(note.getOctave() == 3);
+	}
+	@Test
+	public void testOctaveNegativeLandOnBounds() {
+		MusicNote note = new MusicNote("A", 4, 4, false, false);
+		note.applyOctaveAdjustment(-3, true);
+		assertTrue(note.getOctave() == 1);
+	}
+	@Test
+	public void testOctaveNegativeUnderBoundsBy1Cap() {
+		MusicNote note = new MusicNote("A", 4, 4, false, false);
+		note.applyOctaveAdjustment(-4, false);
+		assertTrue(note.getOctave() == 1); // it capped at the boundary
+	}
+	public void testOctavePositiveUnderBoundsByALotCap() {
+		MusicNote note = new MusicNote("A", 4, 4, false, false);
+		note.applyOctaveAdjustment(-20, false);
+		assertTrue(note.getOctave() == 1); // it capped at the boundary
+	}
+	@Test
+	public void testOctaveNegativeUnderBoundsBy1Delete() {
+		MusicNote note = new MusicNote("A", 4, 4, false, false);
+		note.applyOctaveAdjustment(-4, true);
+		assertTrue(note.getOctave() == 0);
+		assertTrue(note.getCompareValue() == 0); // it became a rest, effectively deleted
+	}
+	@Test
+	public void testOctaveNegativeUnderBoundsByALotDelete() {
+		MusicNote note = new MusicNote("A", 4, 4, false, false);
+		note.applyOctaveAdjustment(-20, true);
+		assertTrue(note.getOctave() == 0);
+		assertTrue(note.getCompareValue() == 0); // it became a rest, effectively deleted
+	}
+	
+	// Copy constructor test
+	
+	@Test
+	public void testCopyConstructor() {
+		MusicNote note = new MusicNote("A", 3, 4, true, false);
+		MusicNote other = new MusicNote(note);
+		assertTrue(note.getNote().equalsIgnoreCase(other.getNote()));
+		assertTrue(note.getDuration() == other.getDuration());
+		assertTrue(note.getOctave() == other.getOctave());
+		assertTrue(note.getCompareValue() == other.getCompareValue()); // this will cover isSharp / isFlat
+	}
+	
 }

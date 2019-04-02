@@ -705,16 +705,20 @@ public class TransMusicXML {
 	public LinkedList<Node> postProcessBarLines(LinkedList<Node> notes) {
 		LinkedList<Node> expandedNotes = new LinkedList<Node>();
 		LinkedList<Node> duplicateNotes = new LinkedList<Node>();
+		LinkedList<Node> endingNotes = new LinkedList<Node>();
 		int startTimeAdjustment = 0;
 		int repeatLeftTime = 0; // the original time (pre-expansion, pre-bpm-multiplier) in the song when we hit the left side of the repeat. for calculating the adjustment applied to all future notes.
 		int repeatRightTime = 0; // the original time (pre-expansion, pre-bpm-multiplier) in the song when we hit the right side of the repeat. for calculating the adjustment applied to all future notes.
 		boolean inRepeat = false; // if we are currently inside of a repeat block, meaning we are currently duplicating notes
-		// TODO boolean inEnding = false; // if we are in an 'ending' block // TODO TBD not sure if needed
+		boolean inEnding = false; // if we are in an 'ending' block
+		int endingLeftTime = 0;
+		int endingRightTime = 0;
+		int endingGap = 0;
 		
 		// To make it as simple as possible:
 		//    Only start duplicating if we see a repeat direction: forward in a left barline (and clear any existing contents of the collection first! this is crucial!)
-		//	  TODO: Stop duplicating if you see an "ending number" attribute in a barline? add them to the expandedNotes collection with some tbd time adjustment?
-		//    Only consume from the "new collection" once we see a right barline with repeat direction: backward
+		//    Only consume from the "new collection" (the duplicated notes) once we see a right barline with repeat direction: backward
+		//	  Additionally, stop duplicating if you see an "ending number" attribute in a barline. You'll need to have all of the "duplicated notes" within the expanded collection once per ending.
 		//    This would remove any code specializing around looking for specific / incrementing ending numbers, etc. We can have n number of endings, because we just keep inserting the "new collection" until we stop having backward directions and get a new forward direction (if there ever is one)
 		
 		for (int x = 0; x < notes.size(); ++x) {
@@ -730,14 +734,10 @@ public class TransMusicXML {
 					inRepeat = true;
 					duplicateNotes.clear();
 					repeatLeftTime = currentBar.getStartTime();
-				} else if (currentBar.getLocation().equalsIgnoreCase("RIGHT") && currentBar.getRepeatDir().equalsIgnoreCase("BACKWARD") && inRepeat) {
+				} else if (currentBar.getLocation().equalsIgnoreCase("RIGHT") && currentBar.getRepeatDir().equalsIgnoreCase("BACKWARD") && inRepeat && currentBar.getEndingNum() == 0) {
 					// We have a closing barline to go with a successful opening barline!
 					repeatRightTime = currentBar.getStartTime();
 					startTimeAdjustment += (repeatRightTime - repeatLeftTime); // add the length of time from went the repeated section started and ended, to the total time adjustment for all following notes
-					// TODO since we don't keep track of measures (at all), you may need to find a way to ensure the start time adjustment / repeats start and end on a unit of time
-					//      that is a multiple of the measure length? I guess my concern is we could be slightly off somehow?
-					//      it shouldn't be possible, i mean, we still have rests in this collection, so since we add the full durations of every note, we should be able to mark the exact end.
-					//      this may be a non-issue, it's just really late at night right now.
 
 					// add all dupes within this repeat section to the new collection along with their time adjustment
 					for (int d = 0; d < duplicateNotes.size(); ++d) { // d for dupe
@@ -749,7 +749,62 @@ public class TransMusicXML {
 						}
 					}
 					inRepeat = false;
-				} else if (currentBar.getLocation().equalsIgnoreCase("RIGHT") && currentBar.getRepeatDir().equalsIgnoreCase("BACKWARD") && !inRepeat) {
+				}
+				
+				
+				// Ending cases
+				else if (currentBar.getLocation().equalsIgnoreCase("LEFT") && currentBar.getEndingNum() != 0) {
+					inEnding = true;
+					endingLeftTime = currentBar.getStartTime();
+				} else if (currentBar.getLocation().equalsIgnoreCase("RIGHT") && currentBar.getEndingNum() != 0) {
+					endingRightTime = currentBar.getStartTime();
+					endingGap = endingRightTime - endingLeftTime; // the gap in time between the ending barlines
+					
+					// when the duplicate notes collection is built, it is from a repeat block.
+					// unfortunately, this makes our work with ending blocks a bit convoluted,
+					// because ending blocks are preceded by repeat blocks.
+					// long story short:
+					// if the ending number is 1, that means the duplicate collection is already inserted into the expanded
+					// collection, and then we just plop in the current ending notes collection into expanded, and thus, we 
+					// have the portion before ending 1, and then we have ending 1. so, we're all set.
+					// however, for endings > 1, we need to reinsert from the duplicate collection (which is the shared portion before any endings),
+					// and THEN insert the (newly repopulated) ending collection.
+					
+					if (currentBar.getEndingNum() > 1) {
+						// since we're dumping a whole nother ton of measures in (the entire length of duplicatedNotes),
+						// we need to massively add to the startTimeAdjustment.
+						startTimeAdjustment += (endingLeftTime - repeatLeftTime);
+						
+						for (int d = 0; d < duplicateNotes.size(); ++d) {
+							NoteNode dupe = new NoteNode((NoteNode)duplicateNotes.get(d));
+							dupe.setStartTime(dupe.getStartTime() + startTimeAdjustment);
+							if (!expandedNotes.add(dupe)) {
+								System.out.println("TransMusicXML#postProcessBarLines - error - failed to add duplicate note preceding ending block to expanded notes collection.");
+								System.out.println("Failed duplicate's values: " + dupe.toString());
+							}
+						}
+						startTimeAdjustment -= endingGap; // we need to go back in time slightly, for the ending note's measure(s) to be lined up right.
+					}
+					
+					// since this ending block is done, add everything from the endingNotes collection to the song
+					for (int e = 0; e < endingNotes.size(); ++e) { // e for end
+						NoteNode end = (NoteNode)endingNotes.get(e);
+						end.setStartTime(end.getStartTime() + startTimeAdjustment);
+						if (!expandedNotes.add(end)) {
+							System.out.println("TransMusicXML#postProcessBarLines - error - failed to add ending note to expanded notes collection.");
+							System.out.println("Failed duplicate's values: " + end.toString());
+						}
+					}
+					
+					endingNotes.clear();
+					inEnding = false;
+					endingLeftTime = 0;
+					endingRightTime = 0;
+					endingGap = 0;
+				}
+				
+				
+				else if (currentBar.getLocation().equalsIgnoreCase("RIGHT") && currentBar.getRepeatDir().equalsIgnoreCase("BACKWARD") && !inRepeat) {
 					// a right bar line telling us to go backwards but we weren't in a repeat. take no action. may need to inspect the xml manually.
 					System.out.println("TransMusicXML#postProcessBarLines - warning - found a closing right BarLine but we weren't in a repeat. Direction: " + currentBar.getRepeatDir());
 					// sometimes we see musicxml ending in a right repeat with no backward direction and no left. is it technically valid?
@@ -764,17 +819,27 @@ public class TransMusicXML {
 			} else { // it is a step note or a rest
 
 				NoteNode currentNote = (NoteNode)notes.get(x);
-				if (!inRepeat) { // if we aren't currently in a repeat block, then no 'expansion' is needed for this part. just transfer the notes to the new collection with time adjustment (if any)
-					currentNote.setStartTime(currentNote.getStartTime() + startTimeAdjustment);
-					expandedNotes.add(currentNote);
-				} else { // inRepeat
+				if (inEnding) {
+					// since we are in an ending block, build a collection of all the notes to attach to the song,
+					// appearing after the repeating "beginning" which is stored in duplicateNotes still.
+					// Note that for ending num = 1, the beginning would've already been inserted into expanded as part of the inRepeat block's logic.
+					
+					endingNotes.add(new NoteNode(currentNote));
+					if (!currentNote.isRest()) {
+						System.out.println("Ending note created: " + NoteUtils.generateCompareValue(currentNote.getStep(), currentNote.getOctave(), currentNote.getAlter() == 1 ? true : false, currentNote.getAlter() == -1 ? true : false));
+					}
+				} else if (inRepeat) {
 					// since we're in a repeat block, these notes are being duplicated (we're 'expanding' the repeat block).
 					// one note goes into the 'expanded' collection, and the other note goes into the 'duplicate' collection,
-					// which will be added to the expanded collection once we're at the end of the repeat block and know the (possibly additional) start time adjustment to apply.
+					// which will be added to the expanded collection once we're at the end of the repeat block and know the start time adjustment to apply.
 					duplicateNotes.add(new NoteNode(currentNote));
 					currentNote.setStartTime(currentNote.getStartTime() + startTimeAdjustment);
 					expandedNotes.add(currentNote);
+				} else { // if we aren't currently in a repeat or ending block, then no 'expansion' is needed for this part. just transfer the notes to the new collection with time adjustment (if any)
+					currentNote.setStartTime(currentNote.getStartTime() + startTimeAdjustment);
+					expandedNotes.add(currentNote);
 				}
+				
 			}
 		}
 		
