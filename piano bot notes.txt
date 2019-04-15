@@ -25,8 +25,8 @@ To further clarify - a song will not be played live just by importing an xml fil
 Additional utilities, such as a "Song stats analyzer" (name TBD), may be developed to determine local maximums / keys that are hit most often in a song,
 	as well as the lowest tone hit, highest tone hit, and so on, so we can optimize "finger" placement for individual songs.
 
-Alternatively, an implementation that has a ratio of up to 1 finger per 1 piano key may be considered.
-	(a 76-88 fingered arduino is gonna be a lot of hardware, but too few keys runs the risk of needing to customize finger placements by hand, per song)
+Alternatively, other intermediate implementations may be considered, such as one that has a ratio of 1:1 ratio of fingers to piano keys, and thus no sliding necessary at all.
+	(a 76-88 fingered arduino is going to be both a lot of hardware AND power consumption, but too few keys runs the risk of needing to customize finger placements by hand, per song)
 
 
 Technical information:
@@ -71,13 +71,19 @@ TRANSPOSER:
 	MusicNote - an individual note from a song / sheet music / what have you. Contains at least the note, octave, and duration.
 	MusicSlice - A collection of all MusicNotes that need to be struck at one very specific period of time
 	MusicSheet - a collection of slices (thus, ultimately a collection of all music notes in the song and when they need to be hit)
-	FingerAssigner - this knows the positions of all the fingers, and processes a music sheet, assigning instructions to fingers.
-	FingerInstruction - an individual "message" telling a single finger to move to a given note and to press it for a given duration
+	Hand (aka FingerAssigner) - this knows the positions of all the fingers, and processes a music sheet, assigning instructions to fingers.
+	Finger - an individual "Finger" that knows which physical unit it is sequentially, and knows what compareValue (note) it is hovering over (or hitting) on the keyboard at any given point in time.
 FEIGNER:
 	A short term basic java gui that shows the position of fingers on a keyboard, and attempts to replicate how the arduino will move fingers and play a song given an .fng file.
 RASPBERRY FOX:
 	The name of my physical piano-playing arduino.
-	
+
+Finger implementations (TBD):
+	Sliding Implementation - Robotic fingers that slide via some conveyor or other mechanism to reach the desired key to hit 
+	Full Implementation - 1:1 ratio of fingers to piano keys (so a 76-key piano has 76 fingers)
+	Limited Implementation - less than a 1:1 ratio of fingers to piano keys (that is, there are keys without fingers), but the keys missing fingers are NEVER HIT for the specific piece of music being played.
+		This would require a lot of manual manipulation to place fingers on every single key hit for a specific song.
+		This amount of real-life "hardcoding" of fingers would really only serve us in the very beginning to test that our earliest arduino output works / is viable.
 	
 	
 

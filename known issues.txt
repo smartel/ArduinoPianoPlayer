@@ -7,3 +7,9 @@ MusicXml translation:
 	1. Double flats and double sharps (alter element values greater than 1) not yet implemented
 	2. Some musicxml DTD's give me a 403 error, until I remove the reference at the top of the musicxml. Then I can process it.
 	3. Sometimes there are entities that fail to resolve, such as "&auml" (any entity like &___), until I remove them from the xml via find and replace all.
+
+Unimplemented features:
+	1. "Sliding fingers" for both arduino code generation, and how to physically move them with the arduino at a fast enough rate to play reasonably
+	2. Midi file translation
+	
+	
