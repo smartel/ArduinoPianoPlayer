@@ -14,6 +14,9 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import DataObjs.MusicSheet;
+import Processors.AlcReaderWriter;
+import Utils.Constants;
 import Utils.NoteUtils;
 
 /**
@@ -431,6 +434,7 @@ public class TransMusicXML {
 			} else if (hasRest) {
 				currentNote.setIsRest(true);
 				hasRest = false;
+				currentNote.setStep(Constants.NOTE_REST);
 			} else if (hasChord) {
 				currentNote.setIsChord(true);
 				hasChord = false;
@@ -672,6 +676,13 @@ public class TransMusicXML {
 				BufferedWriter bw = new BufferedWriter(new FileWriter(new File(alcFilePath)));
 				bw.write(alcContent);
 				bw.close();
+				
+				// This is a bit excessive - we are going to reload the .alc we just wrote out to catch any duplicates (same comp vals and start times, but different durations)
+				// and then re-write the file over the .alc path.
+				System.out.println("\n\n\n[TransMusicXML#parseMusicXMLFile] Initial pass complete.\n\n[TransMusicXML#parseMusicXMLFile] Doing a reload-and-overwrite of the .alc file to make sure everything's all good.\n");
+				AlcReaderWriter arw = new AlcReaderWriter();
+				MusicSheet sheetCheck = arw.loadAlcFile(alcFilePath);
+				arw.writeAlcFile(sheetCheck, alcFilePath);
 				
 			} catch (Exception e) {
 				System.out.println("[TransMusicXML#parseMusicXMLFile] Exception caught while attempting to write the .alc file to disk at path [ " + alcFilePath + " ]: " + e.getMessage());

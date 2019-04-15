@@ -1,13 +1,18 @@
+Known issues, in no particular order.
+
 PianoFeigner:
-	1. Note wav files only have 1 duration, and the sound is not stretched or shrunk in relation to the note it is representing.
+	1. Note wav files only have 1 duration, and the sound is not stretched or shrunk in relation to the note it is representing. That is, a quarter note plays the same .wav file has a whole note, for the same duration.
 	2. When displaying letters on keys, the gui hangs and won't play sound files or respond to hitting the X button to close.
 		This option has temporarily been disabled.
+	3. We might have a daemon hanging every time we play a sound clip? Just noticed in Eclipse :^)
 
 MusicXml translation:
 	1. Double flats and double sharps (alter element values greater than 1) not yet implemented
 	2. Some musicxml DTD's give me a 403 error, until I remove the reference at the top of the musicxml. Then I can process it.
 	3. Sometimes there are entities that fail to resolve, such as "&auml" (any entity like &___), until I remove them from the xml via find and replace all.
-
+	4. "Duplicates" are sometimes written to the .alc file. Rather, when loading the output .alc in with the AlcAlterer, sometimes a few notes are thrown out as duplicates that are the same compval/start time but diff durations (noticed on pieces with multiple voices).
+		a. Not sure if we would want to always keep the shortest duration, longest duration, ... it may be a case-by-case basis that is optimal to fix by hand. As of now, 1 is kept and warnings are printed out.
+	
 Unimplemented features:
 	1. "Sliding fingers" for both arduino code generation, and how to physically move them with the arduino at a fast enough rate to play reasonably
 	2. Midi file translation

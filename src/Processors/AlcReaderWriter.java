@@ -38,6 +38,7 @@ public class AlcReaderWriter {
 		String countLine = null;
 		int noteCount = -1;
 		int noteLinesReadIn = 0;
+		int duplicatesCaught = 0;
 
 		int prevStartTime = -1;
 		StringTokenizer st;
@@ -97,7 +98,12 @@ public class AlcReaderWriter {
 						slice.addMusicNote(note);
 						prevStartTime = currStartTime;
 					} else {
-						slice.addMusicNote(note); // we don't check the returned success boolean flag, because we take no action if it were to fail as a duplicate
+						// if we fail to add a note (such as a duplicate), then we need to decrement the valid note count
+						if (!slice.addMusicNote(note)) {
+							--noteCount;
+							++duplicatesCaught;
+							sheet.setNoteCount(noteCount);
+						}
 					}
 					
 					// counter for our file integrity check
@@ -117,7 +123,7 @@ public class AlcReaderWriter {
 		if (headerLine == null || countLine == null) { // if the file was incomplete (only 1 or 2 lines in length), then there isn't enough data to play a song
 			System.out.println("AlcReader#loadAlcFile - error - .alc file did not have at least 3 lines (1 informational, 1 counter, at least 1 note). File is too small to process.");
 			sheet = null; // the object may not be null if the file was 2 lines long, so this ensures we return null
-		} else if (noteCount != noteLinesReadIn) { // if we fail the integrity check, report an error and return a null object
+		} else if (noteCount != (noteLinesReadIn-duplicatesCaught)) { // if we fail the integrity check, report an error and return a null object
 			System.out.println("AlcReader#loadAlcFile - error - .alc file failed the file integrity check. The number of notes read in does not match the expected note count." +
 						       " Read in: " + noteLinesReadIn + ", Expected: " + noteCount);
 			sheet = null;
