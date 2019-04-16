@@ -6,6 +6,26 @@ PianoFeigner:
 		This option has temporarily been disabled.
 	3. We might have a daemon hanging every time we play a sound clip? Just noticed in Eclipse :^)
 
+PianoFeigner(?) / .alc in general?
+	1. The way we handle "live slices" might be hiding an issue - if a given compare value has a duration of 500, and then it immediately tries to play that cv again 100 ms after the initial hit for a duration of 400 (thus the same remaining duration for the same cv ...),
+		the collection is seemingly considering the second hit as a duplicate and throwing it out. Which is fair.
+		Since we play sound files for all the notes in the "current slice", we should still be playing the sound effect twice, and not actually losing anything in the PianoFeigner's playback.
+		Since the duplicate is thrown out from the "live slice", this means the gui remains accurate (it never stops highlighting the note)
+		So technically, everything works as intended in the PianoFeigner, but some things should still be determined:
+			Is it coincidental or not that the remaining durations are the same in the cases I've caught? (This is a very rare occurrence)
+			If it is just coincidental, then what is the solution?
+				What if the original note has a longer duration than the new note? Do we just re-add the note to the collection with a duration of whichever note has the highest remaining duration?
+					Again, sound playback will be fine, and we just want to maintain the highlight on the note for the full length.
+			Is this technically only an issue with bad input data (not that that would be an excuse not to fix it)?
+			While the PianoFeigner handles it gracefully, I WOULD PREFER THAT THE ALC FILE ITSELF HANDLED THIS ISSUE, SO IT WOULD FIX IT FOR BOTH PIANOFEIGNER AND THE ARDUINO SIMULTANEOUSLY.
+				Right now, the arduino will need to be aware not to stack pushes on top of each other without a release between them.
+				Which is gross because it means the PianoFeigner and the Arduino will have slightly different logic for the same .alc file at the moment.
+		A live example I have of this is munashiki.alc - it tries to hit cv 34.0 for 600, and then only 400 into that, hit it again for 200. which is (coincidentally?) the remaining hold duration anyway, but doesn't rehit it.
+			109200 34.0 600
+			109200 40.0 200
+			109400 39.0 200
+			109600 34.0 200
+	
 MusicXml translation:
 	1. Double flats and double sharps (alter element values greater than 1) not yet implemented
 	2. Some musicxml DTD's give me a 403 error, until I remove the reference at the top of the musicxml. Then I can process it.
@@ -16,5 +36,7 @@ MusicXml translation:
 Unimplemented features:
 	1. "Sliding fingers" for both arduino code generation, and how to physically move them with the arduino at a fast enough rate to play reasonably
 	2. Midi file translation
-	
-	
+
+General:
+QA for unexpected cases, such as manually damaged .alc files
+	(Speaking of which, should we fail an .alc file load if we see a rest note, so it can't ripple through and throw off stats / etc? This would, at most, only affect manually edited files or legacy files, as rests are not generated in .alc files except for the very early days of this project)

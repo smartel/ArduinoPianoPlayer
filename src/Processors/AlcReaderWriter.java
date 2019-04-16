@@ -25,6 +25,13 @@ public class AlcReaderWriter {
 	}
 	
 	/**
+	 * Just a synonym for loadAlcFile :^)
+	 */
+	public MusicSheet readAlcFile(String alcFilePath) {
+		return loadAlcFile(alcFilePath);
+	}
+	
+	/**
 	 * Given the file path to an .alc file, attempts to import it and create a MusicSheet object comprised of MusicSlices and MusicNotes.
 	 * If the data load fails for any reason, an error will be written out and a null MusicSheet object will be returned instead.
 	 * @param alcFilePath filepath to the desired .alc file to load
@@ -46,6 +53,15 @@ public class AlcReaderWriter {
 		int currStartTime;
 		double compareValue;
 		int noteDuration;
+		
+		// TODO While I removed rest instructions from legacy .alc files a while ago, and regenerated those .alc files that had rests,
+		//      I guess it still bugs me that someone could manually add rests back in, and that may throw off stuff like the StatsGenerator's values or how many fingers could be needed (even though rests aren't "hit").
+		//      Should we throw an error or exception if we see a rest compare value when attempting to load an .alc file?
+		//      Should we try to fix it here (by erasing it and decrementing the note counter in the file), or is that too invasive, since a method called >load shouldn't be >overwriting the existing file.
+		//      The AlcAlterer cleans up rests already, so I'd rather not duplicate any cleanup code here anyway. Erroring out and saying when the rest is, allows the user to manually decrement the counter by 1 and delete the line.
+		//        If there are tons of rests, the AlcAlterer would trivially clean it up programmatically.
+		//      The AlcAlterer relies on first doing importAlcFileWithPlaceholders() anyway, as in, it expects there could be rests for it to ignore.
+		//      I don't know, just some thoughts.
 		
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(new File(alcFilePath)));

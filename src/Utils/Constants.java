@@ -81,6 +81,9 @@ public class Constants {
 	final public static int MAX_PIANO_OCTAVE = 10;
 	// Assumed min octave value that will be on a physical piano (this is also the lowest octave value per midi format)
 	final public static int MIN_PIANO_OCTAVE = 0;
+	// With a theoretical max octave value of 10 per MIDI, the highest possible Compare Value would be a 77 (B on octave 10), if we started at a Compare Value of 1 for a C on octave 0
+	final public static double MAX_THEORETICAL_COMPARE_VALUE = 77.0;
+	final public static double MIN_THEORETICAL_COMPARE_VALUE = 1.0; // ok, this isn't theoretical, but I wanted its name to be consistent. We aren't counting rests as a hittable comp val here.
 	
 	// Properties-file settings:
 	 // the number of fields that are expected in a Properties file. If the count doesn't match at runtime, we'll throw an error.

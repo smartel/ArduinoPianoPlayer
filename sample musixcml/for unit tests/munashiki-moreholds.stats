@@ -1,0 +1,75 @@
+Alchemized Music Data File generated from translation of the following .musicxml file: [D:\\GIT Repos\\DONT COMMIT\\munashiki.xml] with bpmMultiplier of: [10]
+Note count: 2260
+Runtime: 302400ms
+Time interval length (GCD): 10ms
+Max simultaneous note hits: 8
+Max simultaneous note hits and holds: 10
+Total unique compare values hit: 63
+Total unique natural compare values hit: 40
+Total unique sharp compare values hit: 23
+Lowest compare value hit: 5.5
+Highest compare value hit: 51.0
+-----
+CompareValue 5.5 G0 sharp hits: 1 (0.04%), total duration: 2400
+CompareValue 6.0 A0       hits: 77 (3.41%), total duration: 157800
+CompareValue 6.5 A0 sharp hits: 2 (0.09%), total duration: 2550
+CompareValue 8.5 C1 sharp hits: 1 (0.04%), total duration: 150
+CompareValue 9.0 D1       hits: 11 (0.49%), total duration: 2550
+CompareValue 9.5 D1 sharp hits: 9 (0.4%), total duration: 4950
+CompareValue 10.0 E1       hits: 35 (1.55%), total duration: 14400
+CompareValue 11.0 F1       hits: 41 (1.81%), total duration: 18600
+CompareValue 12.0 G1       hits: 4 (0.18%), total duration: 2400
+CompareValue 12.5 G1 sharp hits: 1 (0.04%), total duration: 2400
+CompareValue 13.0 A1       hits: 292 (12.92%), total duration: 235200
+CompareValue 13.5 A1 sharp hits: 14 (0.62%), total duration: 9720
+CompareValue 15.0 C2       hits: 10 (0.44%), total duration: 21720
+CompareValue 15.5 C2 sharp hits: 11 (0.49%), total duration: 2520
+CompareValue 16.0 D2       hits: 14 (0.62%), total duration: 4800
+CompareValue 16.5 D2 sharp hits: 15 (0.66%), total duration: 4920
+CompareValue 18.0 F2       hits: 3 (0.13%), total duration: 4320
+CompareValue 18.5 F2 sharp hits: 2 (0.09%), total duration: 1200
+CompareValue 20.0 A2       hits: 34 (1.5%), total duration: 78000
+CompareValue 21.0 B2       hits: 4 (0.18%), total duration: 2400
+CompareValue 22.0 C3       hits: 4 (0.18%), total duration: 2400
+CompareValue 23.5 D3 sharp hits: 6 (0.27%), total duration: 3600
+CompareValue 24.0 E3       hits: 4 (0.18%), total duration: 9600
+CompareValue 25.0 F3       hits: 38 (1.68%), total duration: 21600
+CompareValue 25.5 F3 sharp hits: 10 (0.44%), total duration: 7200
+CompareValue 26.0 G3       hits: 67 (2.96%), total duration: 36900
+CompareValue 26.5 G3 sharp hits: 1 (0.04%), total duration: 300
+CompareValue 27.0 A3       hits: 184 (8.14%), total duration: 61800
+CompareValue 27.5 A3 sharp hits: 2 (0.09%), total duration: 600
+CompareValue 28.0 B3       hits: 163 (7.21%), total duration: 55300
+CompareValue 29.0 C4       hits: 176 (7.79%), total duration: 58900
+CompareValue 29.5 C4 sharp hits: 2 (0.09%), total duration: 600
+CompareValue 30.0 D4       hits: 89 (3.94%), total duration: 40950
+CompareValue 30.5 D4 sharp hits: 16 (0.71%), total duration: 6800
+CompareValue 31.0 E4       hits: 106 (4.69%), total duration: 34050
+CompareValue 32.0 F4       hits: 38 (1.68%), total duration: 24800
+CompareValue 32.5 F4 sharp hits: 44 (1.95%), total duration: 15000
+CompareValue 33.0 G4       hits: 184 (8.14%), total duration: 53750
+CompareValue 33.5 G4 sharp hits: 8 (0.35%), total duration: 2400
+CompareValue 34.0 A4       hits: 52 (2.3%), total duration: 22100
+CompareValue 34.5 A4 sharp hits: 6 (0.27%), total duration: 1350
+CompareValue 35.0 B4       hits: 73 (3.23%), total duration: 22400
+CompareValue 36.0 C5       hits: 58 (2.57%), total duration: 17950
+CompareValue 37.0 D5       hits: 40 (1.77%), total duration: 17750
+CompareValue 37.5 D5 sharp hits: 10 (0.44%), total duration: 3600
+CompareValue 38.0 E5       hits: 44 (1.95%), total duration: 16500
+CompareValue 39.0 F5       hits: 29 (1.28%), total duration: 7400
+CompareValue 39.5 F5 sharp hits: 14 (0.62%), total duration: 4000
+CompareValue 40.0 G5       hits: 18 (0.8%), total duration: 10100
+CompareValue 40.5 G5 sharp hits: 4 (0.18%), total duration: 1200
+CompareValue 41.0 A5       hits: 21 (0.93%), total duration: 6000
+CompareValue 42.0 B5       hits: 37 (1.64%), total duration: 9750
+CompareValue 43.0 C6       hits: 29 (1.28%), total duration: 7050
+CompareValue 44.0 D6       hits: 20 (0.88%), total duration: 8700
+CompareValue 44.5 D6 sharp hits: 8 (0.35%), total duration: 1600
+CompareValue 45.0 E6       hits: 26 (1.15%), total duration: 9800
+CompareValue 46.0 F6       hits: 10 (0.44%), total duration: 1700
+CompareValue 46.5 F6 sharp hits: 6 (0.27%), total duration: 1200
+CompareValue 47.0 G6       hits: 8 (0.35%), total duration: 6000
+CompareValue 48.0 A6       hits: 6 (0.27%), total duration: 1200
+CompareValue 49.0 B6       hits: 10 (0.44%), total duration: 2600
+CompareValue 50.0 C7       hits: 4 (0.18%), total duration: 800
+CompareValue 51.0 D7       hits: 4 (0.18%), total duration: 800

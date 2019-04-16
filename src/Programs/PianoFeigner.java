@@ -126,7 +126,7 @@ public class PianoFeigner extends JFrame {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					if (sliceIndex < slices.size()) {
-					MusicSlice currentSlice = slices.get(sliceIndex);
+						MusicSlice currentSlice = slices.get(sliceIndex);
 						
 						if (currentSlice.getStartTime() != rollingTime) {
 							// while this is the next MusicSlice we need to play, it is NOT time to play it yet. so do nothing and wait for the next loop.
