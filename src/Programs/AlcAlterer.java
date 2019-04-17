@@ -56,10 +56,13 @@ public class AlcAlterer {
 	// x. I'm not sure how easy it would be to mark a section of the alc file for deletion. Like, say you wanted to delete all notes that start from 1400ms to 1800ms in a song.
 	//    You'd need to be able to specify a start point, an end point, and then the program would mass update the start times of every note after 1800ms to what, start 400ms earlier?
 	//    Not sure how valuable this would be yet.
+	//    Alternatively, what if we want to delete a whole octave instead of a time range? Like, the song has a ton of notes in octaev 0 and we don't have fingers for it.
+	//    Alternatively, the reverse of either of these: we want to keep only the parts of the song between starting time x and ending time y, or in range of octave x to octave y.
 	// x. Perhaps one day we might want to be able to target specific compare values and replacements for them? Such as, if we generate an alc file with one key out of range of the piano,
-	//    or if a finger was damaged in some way,
+	//    or if a finger was damaged in some way. Or if the .stats generated for a song has a lot of hits outside of the playable range per PianoProperties.
 	//    We could target compareValue xyz and tell it to replace it with compareValue abc? Or heck, replace it with 0, which will then be cut from the file and we get a new integrity count.
-	//    (Well, that replacement sounds like it'd be a lot easier with just Find and Replace All, frankly.)
+	// x. "Wiggle" an octave left or right if the note is out of range? That is, if the octave is too low by one, then add an octave to the note. If it is too high, subtract one.
+	//    Then we get into the issue of >what if it is now a duplicate (a note was already at that position), and then we need to subtract 1 from the note counter, unless we wiggle again, but that'd sound way off.
 	
 	// Of course, there may be more cases that come up where we go "oh hey, being able to edit an alc file to add / modify / remove blah would be great", so we could just shove it in here...
 		

@@ -55,6 +55,10 @@ public class Finger {
 		return compVal;
 	}
 	
+	@Override
+	public String toString() {
+		return "Finger: " + fingerSequence + " - initial position: " + getCompValAtTime(0);
+	}
 	
 	
 }

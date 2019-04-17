@@ -29,4 +29,7 @@ public class FngWriter {
 	// the sane thing to do is what, change the stacked push into a >release and then >push immediately afterwards?
 	// whatever the fix you do here is, I would really like it to be consistent with the pianofeigner.
 	
+	// TODO if we have linear tracks for fingers, (as in: finger A: down at 1100, up at 1300, down at 1600, up at 1900), then it'd be easy to see two stacked commands by eye, ala:
+	//      down 1000, down 1300, up 1500, up 1600
+	//      but I think we need a linear list of all fingers in order, like finger A down 1100, finger b down 1200, ... for the machine to play it
 }

@@ -1,6 +1,11 @@
 package Programs;
 
+import DataObjs.MusicSheet;
+import DataObjs.PianoProperties;
+import Processors.AlcReaderWriter;
+import Processors.Hand;
 import Translators.TransMusicXML;
+import Utils.Constants;
 
 /**
  * NoteTransposer
@@ -14,24 +19,36 @@ import Translators.TransMusicXML;
 public class NoteTransposer {
 
 	public static void main(String[] args) {
+		PianoProperties properties;
+		AlcReaderWriter arw;
+		MusicSheet sheet;
+		String propertiesPath; // path to the 
 		String targetFilePath; // path to the target input file to translate to .alc / transpose to arduino code
 		String alcFilePath; // path to write the output alc file to (only used if translating from some other format like .musicxml)
 		int bpmMultiplier;
 		boolean isSuccessful = true;
 	
 		// Usage:
-		// 1. file path to desired file to translate, including filename and extension
-		// 2. bpm-multiplier
-		// 3. OPTIONAL - file path to write the output .alc file to, including filename and extension
+		// 1. piano_properties file path to setup the internal piano data (how many keys, fingers, ...)
+		// 2. file path to desired file to translate, including filename and extension
+		// 3. bpm-multiplier
+		// 4. OPTIONAL - file path to write the output .alc file to, including filename and extension
 		//               (if not provided, will be the same path as the input file, but swap the previous extension for .alc if translating)
 
-		if (args.length < 2) {
-			System.out.println("NoteTransposer#main usage:  {String: input .xml file path, Integer: bpm-multiplier, String: output .alc file path} ");
-			System.out.println("NoteTransposer#main - Please provide a filepath to a music data file (.alc, musicxml) to convert for the arduino player, a bpm-multiplier (the lower the integer, the faster the song will play), and optionally, an output filepath for the generated .alc file. Gracefully exiting.");
+		if (args.length < 3) {
+			System.out.println("NoteTransposer#main usage:  {String: input piano_properties file path, String: input .xml file path, Integer: bpm-multiplier, String: output .alc file path} ");
+			System.out.println("NoteTransposer#main - Please provide a filepath to a Piano Properties file, a filepath to a music data file (.alc, musicxml) to convert for the arduino player, a bpm-multiplier (the lower the integer, the faster the song will play), and optionally, an output filepath for the generated .alc file. Gracefully exiting.");
 		} else {
-			targetFilePath = args[0];
+			propertiesPath = args[0];
+			targetFilePath = args[1];
+			
 			try {
-				bpmMultiplier = Integer.parseInt(args[1]);
+				properties = new PianoProperties(propertiesPath);				
+				if (!properties.didLoad()) {
+					throw new Exception("Invalid properties file provided. Aborting execution.");
+				}
+				
+				bpmMultiplier = Integer.parseInt(args[2]);
 
 				// if the file needs to be translated and an optional output alc filepath wasn't provided, display the path that will be used
 				if (args.length == 1 && (!targetFilePath.contains(".alc"))) {
@@ -39,7 +56,7 @@ public class NoteTransposer {
 					System.out.println("NoteTransposer#main - No optional filepath was provided for the output .alc file. The following path will be used: " + alcFilePath);
 				} else {
 					// use the provided .alc filepath when writing the output file
-					alcFilePath = args[2];
+					alcFilePath = args[3];
 				}
 			
 				if (targetFilePath.endsWith(".xml") || targetFilePath.endsWith(".musicxml")) {
@@ -52,14 +69,27 @@ public class NoteTransposer {
 				if (targetFilePath.endsWith("alc") || 
 		           ((targetFilePath.endsWith(".xml") || targetFilePath.endsWith(".musicxml")) && isSuccessful) ) {
 
-					// TODO
-					// create the arduino code / finger assignments using the alc file
-					
+					int fingerImpl = Integer.parseInt(properties.getSetting(Constants.SETTINGS_FINGER_IMPL));
+					if (fingerImpl == Constants.FINGER_IMPL_FULL || fingerImpl == Constants.FINGER_IMPL_LIMITED || fingerImpl == Constants.FINGER_IMPL_SLIDING) {
+
+						// create the finger assignments using the alc file
+						arw = new AlcReaderWriter();
+						sheet = arw.loadAlcFile(alcFilePath);
+						if (sheet != null) {
+							Hand hand = new Hand(properties, sheet);
+							if (hand.didInit()) {
+								// TODO tbd gimme that pseudo code
+							}
+						}
+					} else {
+						System.out.println("NoteTransposer#main - Finger implementation is not FULL, LIMITED, or SLIDING, so no arduino / finger code will be written. Exiting.");
+					}
 				}
-				
-			
 			} catch (NumberFormatException e) {
-				System.out.println("NoteTransposer#main - Please provide a valid integer to use for the bpm-multiplier. Value passed in: [" + args[1] + "]. Gracefully exiting.");
+				System.out.println("NoteTransposer#main - Please provide a valid integer to use for the bpm-multiplier. Value passed in: [" + args[2] + "]. Gracefully exiting.");
+			} catch (Exception e) {
+				System.out.println("NoteTransposer#main - Exception caught: " + e.getMessage());
+				e.printStackTrace();
 			}
 		}
 	}

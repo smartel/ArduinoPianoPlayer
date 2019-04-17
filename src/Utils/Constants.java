@@ -118,9 +118,24 @@ public class Constants {
 	public static final String SETTINGS_LAST_NOTE = "LAST_NOTE";
 	// last octave (determined from total)
 	public static final String SETTINGS_LAST_OCTAVE = "LAST_OCTAVE";
+	// the finger implementation to use (1:1 ratio between fingers / keys for all keys, for a limited subset of keys, or sliding fingers)
+	public static final String SETTINGS_FINGER_IMPL = "FINGER_IMPLEMENTATION";
+	
+	// Finger implementations
+	public static final int FINGER_IMPL_FULL = 1;
+	public static final String STR_FINGER_IMPL_FULL = "FULL IMPLEMENTATION";
+	public static final int FINGER_IMPL_LIMITED = 2;
+	public static final String STR_FINGER_IMPL_LIMITED = "LIMITED IMPLEMENTATION";
+	public static final int FINGER_IMPL_SLIDING = 3;
+	public static final String STR_FINGER_IMPL_SLIDING = "SLIDING IMPLEMENTATION";
+	public static final int FINGER_IMPL_GUI_ONLY = 4;
+	public static final String STR_FINGER_IMPL_GUI_ONLY = "GUI ONLY IMPLEMENTATION";
+	public static final int FINGER_IMPL_UNSUPPORTED = -1;
+	public static final String STR_FINGER_IMPL_UNSUPPORTED = "UNSUPPORTED IMPLEMENTATION";
 	
 	// AlcAlterer options
 	public static final String BPM_OPTION = "BPM";
 	public static final String OCTAVE_OPTION = "OCTAVE";
 	public static final String LOOP_OPTION = "LOOP";
+	
 }

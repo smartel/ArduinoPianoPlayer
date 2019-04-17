@@ -35,6 +35,7 @@ MusicXml translation:
 	
 Unimplemented features:
 	1. "Sliding fingers" for both arduino code generation, and how to physically move them with the arduino at a fast enough rate to play reasonably
+		1a. Do we want to allow hybrid implementations, where there are non-moving fingers (not on a conveyor / other apparatus) alongside sliding fingers? Right now, PianoProperties would call it invalid.
 	2. Midi file translation
 
 General:

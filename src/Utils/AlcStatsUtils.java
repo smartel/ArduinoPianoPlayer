@@ -202,7 +202,6 @@ public class AlcStatsUtils {
 		// Almost all of this code is ripped straight from the PianoFeigner's code to play the song, minus the waits and sound files.
 
 		LinkedList<MusicSlice> slices = sheet.getSlices();
-		// TODO dont we need a different loop? like, while rollingTime < endTime?
 		while (sliceIndex < slices.size()) {
 			MusicSlice currentSlice = slices.get(sliceIndex);
 			
@@ -230,7 +229,7 @@ public class AlcStatsUtils {
 	 * Note: this is largely ripped STRAIGHT from the PianoFeigner
 	 * See PianoFeigner#setHitNotes for more details.
 	 */
-	public void setHitNotes(MusicSlice currentSlice, int duration, int startTime) {
+	private void setHitNotes(MusicSlice currentSlice, int duration, int startTime) {
 		MusicSlice newSlice = new MusicSlice(startTime); // this will store the new notes to display in the gui
 		
 		// check for expired previous notes

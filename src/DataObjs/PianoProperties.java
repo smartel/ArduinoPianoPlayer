@@ -26,7 +26,7 @@ public class PianoProperties {
 		settings = new HashMap<String, String>();
 		didLoad = loadPropertiesFile(propertiesPath);
 		if (didLoad) {
-			determineRemainingPropertyValues();
+			didLoad = determineRemainingPropertyValues();
 		}
 	}
 	
@@ -116,25 +116,25 @@ public class PianoProperties {
 			
 			// ensure the properties file actually contained all settings
 			if (fieldCount != Constants.SETTINGS_EXPECTED_COUNT) {
-				errorMsgs += "Properties#loadPropertiesFile - error - the properties file does not have all required settings. Fields counted: " + fieldCount +
+				errorMsgs += "PianoProperties#loadPropertiesFile - error - the properties file does not have all required settings. Fields counted: " + fieldCount +
 						     ". Expected # of fields: " + Constants.SETTINGS_EXPECTED_COUNT + "\n";
 				wasSuccessful = false;
 			}
 			
 			if (!errorMsgs.isEmpty()) {
-				System.out.println("Properties#loadPropertiesFile - error - the following errors were encountered while processing the Settings file:\n" + errorMsgs);
+				System.out.println("PianoProperties#loadPropertiesFile - error - the following errors were encountered while processing the Settings file:\n" + errorMsgs);
 				wasSuccessful = false;
 			}
 			
 			br.close();
 		} catch (NumberFormatException e) {
-			System.out.println("Properties#loadPropertiesFile - error - a number value is needed for the following setting:\n" + setting + "\nValue was: " + value);
+			System.out.println("PianoProperties#loadPropertiesFile - error - a number value is needed for the following setting:\n" + setting + "\nValue was: " + value);
 			wasSuccessful = false;
 		} catch (FileNotFoundException e) {
-			System.out.println("Properties#loadPropertiesFile - error - the properties file could not be found at: " + propertiesPath);
+			System.out.println("PianoProperties#loadPropertiesFile - error - the properties file could not be found at: " + propertiesPath);
 			wasSuccessful = false;
 		} catch (Exception e) {
-			System.out.println("Properties#loadPropertiesFile - error - unknown error reading in settings file. Exception was: " + e.getMessage());
+			System.out.println("PianoProperties#loadPropertiesFile - error - unknown error reading in settings file. Exception was: " + e.getMessage());
 			wasSuccessful = false;
 		}
 		
@@ -143,8 +143,10 @@ public class PianoProperties {
 	
 	/**
 	 * Determines the remaining property values, determined by analyzing the provided values
+	 * @return true if it successfully determined the remaining values, false otherwise
 	 */
-	public void determineRemainingPropertyValues() {
+	public boolean determineRemainingPropertyValues() {
+		boolean isSuccessful = true;
 		double minCompVal;
 		int numWhiteKeys;
 		int numBlackKeys;
@@ -205,6 +207,32 @@ public class PianoProperties {
 		
 		// determine last note
 		settings.put(Constants.SETTINGS_LAST_NOTE, NoteUtils.getNoteForPosition(notePositionInOctave));
+		
+		// determine the finger implementation to use
+		// if there are sliding fingers and NO static fingers, then it is a SLIDING IMPLEMENTATION.
+		// if there are no sliding fingers and there are static fingers, then it is a full implementation is the number of fingers == the total number of keys, else it is limited.
+		// as of now, if it is a sort of "hybrid" implementation (a mix of sliding and static), we'll have to error out. It isn't handled at this time.
+		int numSlidingFings = Integer.parseInt(settings.get(Constants.SETTINGS_NUM_SLIDING_FINGERS));
+		int numStaticFings = Integer.parseInt(settings.get(Constants.SETTINGS_NUM_STATIC_FINGERS));
+		int totalNumKeys = Integer.parseInt(settings.get(Constants.SETTINGS_TOTAL_NUM_KEYS));
+		if (numSlidingFings > 0 && numStaticFings == 0) {
+			settings.put(Constants.SETTINGS_FINGER_IMPL, Constants.FINGER_IMPL_SLIDING+"");
+		} else if (numSlidingFings == 0 && numStaticFings > 0 && numStaticFings == totalNumKeys) {
+			settings.put(Constants.SETTINGS_FINGER_IMPL, Constants.FINGER_IMPL_FULL+"");
+		} else if (numSlidingFings == 0 && numStaticFings > 0 && numStaticFings < totalNumKeys) {
+			settings.put(Constants.SETTINGS_FINGER_IMPL, Constants.FINGER_IMPL_LIMITED+"");
+		} else if (numSlidingFings == 0 && numStaticFings == 0) {
+			settings.put(Constants.SETTINGS_FINGER_IMPL, Constants.FINGER_IMPL_GUI_ONLY+"");
+		} else {
+			// this should catch hybrid implementations (mix of sliding and static) as well as weird cases like having more fingers than hittable keys
+			System.out.println("PianoProperties#determineRemainingPropertyValues - error - unsupported finger implementation. numSlidingFings: " + numSlidingFings + ", numStaticFings: " + numStaticFings + ", totalNumKeys: " + totalNumKeys);
+			settings.put(Constants.SETTINGS_FINGER_IMPL, Constants.FINGER_IMPL_UNSUPPORTED+"");
+			
+			// we can't proceed without a valid finger implementation, so we must mark the properties load as failed
+			isSuccessful = false;
+		}
+		
+		return isSuccessful;
 	}
 	
 	// getters
@@ -236,6 +264,21 @@ public class PianoProperties {
 		data += Constants.SETTINGS_NUM_BLACK_KEYS + ": " + settings.get(Constants.SETTINGS_NUM_BLACK_KEYS) + "\n";
 		data += Constants.SETTINGS_LAST_NOTE + ": " + settings.get(Constants.SETTINGS_LAST_NOTE) + "\n";
 		data += Constants.SETTINGS_LAST_OCTAVE + ": " + settings.get(Constants.SETTINGS_LAST_OCTAVE) + "\n";
+		
+		int fingerImpl = Integer.parseInt(settings.get(Constants.SETTINGS_FINGER_IMPL));
+		data += Constants.SETTINGS_FINGER_IMPL + ": " + fingerImpl;
+		if (fingerImpl == 1) {
+			data += " (" + Constants.STR_FINGER_IMPL_FULL + ")";
+		} else if (fingerImpl == 2) {
+			data += " (" + Constants.STR_FINGER_IMPL_LIMITED + ")";
+		} else if (fingerImpl == 3) {
+			data += " (" + Constants.STR_FINGER_IMPL_SLIDING + ")";
+		} else if (fingerImpl == 4) {
+			data += " (" + Constants.STR_FINGER_IMPL_GUI_ONLY + ")";
+		} else {
+			data += " (" + Constants.STR_FINGER_IMPL_UNSUPPORTED + ")";
+		}
+		data += "\n";
 
 		return data;
 	}

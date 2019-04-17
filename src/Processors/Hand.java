@@ -1,9 +1,13 @@
 package Processors;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 
 import DataObjs.Finger;
+import DataObjs.MusicSheet;
 import DataObjs.PianoProperties;
+import Utils.AlcStatsUtils;
+import Utils.AlcStatsUtils.NoteStats;
 import Utils.Constants;
 import Utils.NoteUtils;
 
@@ -17,8 +21,12 @@ import Utils.NoteUtils;
 public class Hand {
 
 	LinkedList<Finger> fingers;
+	boolean didInit;
 	
-	public Hand(PianoProperties properties) {
+	public Hand(PianoProperties properties, MusicSheet sheet) {
+		
+		didInit = true; // we'll assume a successful initialization until we see otherwise
+		int fingerImpl = Integer.parseInt(properties.getSetting(Constants.SETTINGS_FINGER_IMPL));
 		
 		// Initialize fingers
 		// Fingers are simple objects that basically know their sequential position, and what know they are hovering over (and or pressing) at a given time.
@@ -28,32 +36,89 @@ public class Hand {
 		// This may seem like a lot of work for what should boil down to just a quick 1:1 lookup for Full (and still a quick static lookup for Limited finger implementations),
 		//   but accounting for time leaves the door open for implementing Sliding finger implementations sometime in the future.
 		fingers = new LinkedList<Finger>();
+
+		AlcStatsUtils asu = new AlcStatsUtils();
+		HashMap<Double, NoteStats> stats = asu.generateCompValStats(sheet);
+		
 		
 		// If a Full finger implementation, create a finger object for every available compareValue
-		// TODO just keep calling getNextNoteCV with the piano's start cv until you reach the end cv
-		// TODO do
-		double currCompVal = Double.parseDouble(properties.getSetting(Constants.SETTINGS_MIN_COMP_VALUE)); // The start / initial compare value on the leftmost of the piano
-		double endCompVal = Double.parseDouble(properties.getSetting(Constants.SETTINGS_MAX_COMP_VALUE));
-		int fingerSeq = 1;
-		while (currCompVal <= endCompVal) {
-			Finger finger = new Finger(fingerSeq, currCompVal);
-			fingers.add(finger);
-			++fingerSeq;
-			currCompVal = NoteUtils.getNextNoteCV(currCompVal);
+		if (fingerImpl == Constants.FINGER_IMPL_FULL) {
+			double currCompVal = Double.parseDouble(properties.getSetting(Constants.SETTINGS_MIN_COMP_VALUE)); // The start / initial compare value on the leftmost of the piano
+			double endCompVal = Double.parseDouble(properties.getSetting(Constants.SETTINGS_MAX_COMP_VALUE));
+			int fingerSeq = 1;
+			while (currCompVal <= endCompVal) {
+				Finger finger = new Finger(fingerSeq, currCompVal);
+				fingers.add(finger);
+				++fingerSeq;
+				currCompVal = NoteUtils.getNextNoteCV(currCompVal);
+			}
 		}
 		
 		// If a Limited finger implementation, determine how many fingers are needed (StatsUtils), and create a finger for each note.
-		// TODO and we'll need to print out instructions so the user can set up the physical fingers.
-		// TODO NYI
+		// We don't actually check how many static fingers they have. Either they have enough and it is fine, or they don't have enough, and when they get the .stats / .fng file,
+		// they'll realize they can't play it. As long as there is > 0 static fingers in their properties file, we'll consider it in LIMITED implementation move and continue to process.
+		else if (fingerImpl == Constants.FINGER_IMPL_LIMITED) {
+			
+			double currCompVal = Double.parseDouble(properties.getSetting(Constants.SETTINGS_MIN_COMP_VALUE)); // The start / initial compare value on the leftmost of the piano
+			double endCompVal = Double.parseDouble(properties.getSetting(Constants.SETTINGS_MAX_COMP_VALUE));
+			int fingerSeq = 1;
+			while (currCompVal <= endCompVal) {
+				// Since this is limited (not full), only create a finger IF it was hit
+				if (stats.get(currCompVal).getNumTimesHit() > 0) {
+					Finger finger = new Finger(fingerSeq, currCompVal);
+					fingers.add(finger);
+					++fingerSeq;
+				}
+				currCompVal = NoteUtils.getNextNoteCV(currCompVal);
+			}
+			
+			System.out.println("Stats required for setting up limited fingers:\n");
+			System.out.println(asu.getFullStats(sheet, false));
+			System.out.println("\nFinger setup confirmation:");
+			for (int x = 0; x < fingers.size(); ++x) {
+				System.out.println(fingers.get(x).toString());
+			}
+		}
 		
-		// Sliding finger implementation TBD. We'd need to know how many fingers are available, how fast they can slide, and track their positions within Finger objects,
-		// while also detecting / preventing potential collisions.
-		// TODO NYI
-		// do a java implementation of our old c++ problem solver framework to find the best solution for handling slides?
-			// based on the minimum number of keys needed based on >how many notes are ever hit simultaneously?
-				// if we account for lifting keys 0.15 seconds early or whatever, we should TOTAL how much "play time" is "lost" that way
-					// and then see if we can decrease the "lost time" by adding more fingers, hopefully bringing the "lost" time to 0.
-						// so an optimal solution would be somewhere between >least number of fingers while also having closest to 0 lost time?
+		else if (fingerImpl == Constants.FINGER_IMPL_SLIDING) {
+			// Sliding finger implementation TBD. We'd need to know how many fingers are available, how fast they can slide, and track their positions within Finger objects,
+			// while also detecting / preventing potential collisions.
+			// At a minimum, we would need either AlcStatsUtils#getMaxSimulHitsAndHolds or AlcStatsUtils#getMaxSimulHits number of fingers.
+			// TODO NYI
+			// do a java implementation of our old c++ problem solver framework to find the best solution for handling slides?
+				// based on the minimum number of keys needed based on >how many notes are ever hit simultaneously?
+					// if we account for lifting keys 0.15 seconds early or whatever, we should TOTAL how much "play time" is "lost" that way
+						// and then see if we can decrease the "lost time" by adding more fingers, hopefully bringing the "lost" time to 0.
+							// so an optimal solution would be somewhere between >least number of fingers while also having closest to 0 lost time?
+		} else if (fingerImpl == Constants.FINGER_IMPL_GUI_ONLY) {
+			System.out.println("Hand#ctor: Finger Implementation is set to GUI-only mode (no static or sliding fingers). Fingers can't be initialized. Confirm - fingerImpl: " + fingerImpl);
+			didInit = false;
+		} else {
+			System.out.println("Hand#ctor: unknown finger implementation supplied. Fingers can't be initialized. Supplied fingerImpl: " + fingerImpl);
+			didInit = false;
+		}
+		
+		
+		// print out a GREAT BIG WARNING about notes that are out of range? (that is, on octaves that the piano can't reach, even if a Full implementation)
+		for (double x = Constants.MIN_THEORETICAL_COMPARE_VALUE;
+			 x < Double.parseDouble(properties.getSetting(Constants.SETTINGS_MIN_COMP_VALUE));
+			 x = NoteUtils.getNextNoteCV(x)) {
+			
+			// Warn that the following hit notes are too low
+			if (stats.get(x).getNumTimesHit() > 0) {
+				System.out.println("Hand#ctor: warning - Note compareValue hit in song is too low to be hit according to the piano properties. Out-of-range compareValue: " + x);
+			}
+		}
+		for (double x = NoteUtils.getNextNoteCV(Double.parseDouble(properties.getSetting(Constants.SETTINGS_MAX_COMP_VALUE)));  
+			 x <= Constants.MAX_THEORETICAL_COMPARE_VALUE;
+			 x = NoteUtils.getNextNoteCV(x)) {
+			
+			// Warn that the following hit notes are too high
+			if (stats.get(x).getNumTimesHit() > 0) {
+				System.out.println("Hand#ctor: warning - Note compareValue hit in song is too high to be hit according to the piano properties. Out-of-range compareValue: " + x);
+			}
+		}
+		
 		
 	}
 	
@@ -91,5 +156,10 @@ public class Hand {
 	
 	
 
-	
+	/**
+	 * @return true if this Hand successfully initialized (didn't have a bad finger implementation, ...). false otherwise
+	 */
+	public boolean didInit() {
+		return didInit;
+	}
 }
