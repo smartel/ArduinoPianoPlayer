@@ -60,5 +60,12 @@ public class Finger {
 		return "Finger: " + fingerSequence + " - initial position: " + getCompValAtTime(0);
 	}
 	
+	/**
+	 * Returns the identifying finger sequence id
+	 * @return
+	 */
+	public int getFingerSequence() {
+		return fingerSequence;
+	}
 	
 }

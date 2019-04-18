@@ -1,5 +1,8 @@
 package Utils;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -50,6 +53,29 @@ public class AlcStatsUtils {
 	// Given a MusicSheet (loaded from an Alc file, my personal format), determine various statistics, like the range of notes that are hit and how many simultaneous fingers would be required to play the song.
 	
 	/**
+	 * Wrapper around getFullStats that writes its results to the given output path
+	 * @param sheet
+	 * @param displayNonHitNotes
+	 * @param outputPath
+	 * @return boolean true if successfully wrote the stats file to the given output path, false otherwise
+	 */
+	public boolean writeFullStatsToFile(MusicSheet sheet, boolean displayNonHitNotes, String outputPath) {
+		boolean wasSuccessful = true;
+		
+		try {
+			BufferedWriter bw = new BufferedWriter(new FileWriter(new File(outputPath)));
+			bw.write(getFullStats(sheet, displayNonHitNotes));
+			bw.close();
+		} catch (Exception e) {
+			System.out.println("AlcStatsUtils#writeFullStatsToFile - Exception caught trying to write stats output file to: " + outputPath + ".");
+			e.printStackTrace();
+			wasSuccessful = false;
+		}
+		
+		return wasSuccessful;
+	}
+	
+	/**
 	 * Given a MusicSheet, will returning a String containing the full detailed statistics for it
 	 * @param sheet MusicSheet to generate stats for
 	 * @param displayNonHitNotes if true, then stats will be printed out for compareValues that were never hit
@@ -71,7 +97,6 @@ public class AlcStatsUtils {
 		results += "Time interval length (GCD): " + sheet.getGCD() + "ms\n";
 		results += "Max simultaneous note hits: " + getMaxSimulHits(sheet) + "\n";
 		results += "Max simultaneous note hits and holds: " + getMaxSimulHitsAndHolds(sheet) + "\n";
-		// TODO keep an example .stats somewhere once done
 		
 		// Note: this for-loop explicitly skips compareValue 0, as there should not be any rest notes in an .alc file as robotic fingers can't take any action to hit them.
 		HashMap<Double, NoteStats> compValStats = generateCompValStats(sheet);

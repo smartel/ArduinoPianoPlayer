@@ -72,7 +72,7 @@ public class Hand {
 				currCompVal = NoteUtils.getNextNoteCV(currCompVal);
 			}
 			
-			System.out.println("Stats required for setting up limited fingers:\n");
+			System.out.println("\nStats required for setting up limited fingers:\n");
 			System.out.println(asu.getFullStats(sheet, false));
 			System.out.println("\nFinger setup confirmation:");
 			for (int x = 0; x < fingers.size(); ++x) {
