@@ -606,6 +606,7 @@ public class TransMusicXML {
 			}
 			
 			notes = postProcessCutDuplicates(notes);
+			notes = postProcessChompStackedHits(notes);
 			
 			// Display for manual review while also creating a string representation of our .alc format
 			System.out.println(attrNode + "\n");
@@ -901,6 +902,67 @@ public class TransMusicXML {
 			} else {
 				System.out.println("TransMusicXML#postProcessCutDuplicates - info - duplicate note cleaned up: " + note);
 			}
+		}
+		
+		return cleanedNotes;
+	}
+	
+	/**
+	 * Let me explain.
+	 * We can make the assumption a piano key can only be in a pressed or non-pressed state. You can't hit a key while it is already pressed.
+	 * Some musicxml files we have translated have had instances of stacking hits on top of each other - that is, while a key is being held down, we get an instruction to press it again,
+	 * even though it hasn't released yet.
+	 * 
+	 * This logic is moved to the alc import / cleanup step, because it is potentially an issue that could arise from any bad data source, and not just MusicXml
+	 * 
+	 * This diagram will help demonstrate:
+	 * 
+	 * TIME: 0         1
+	 * ----------------------------------------------------
+	 * NOTE: A         A
+	 * NOTE:     B         B
+	 * each dash ("-") representing 100ms
+	 * note A starts at 0ms and ends at 1000ms for cv 20 (arbitrary cv, could be anything as long as A and B are the same cv)
+	 * note B starts at 500ms and ends at 1500ms
+	 * The instructions would read like this: (pseudocode)
+	 * 0000ms  Finger 1  Hit
+	 * 0500ms  Finger 1  Hit
+	 * 1000ms  Finger 1  Release
+	 * 1500ms  Finger 1  Release
+	 * Since they are for the same cv, the finger is already depressed hitting A once it gets an instruction to hit B
+	 * So to get it to hit the key again, we need to insert a release at 500ms, that will occur BEFORE the hit at 500ms
+	 * So whichever note starts first, will have its duration count down so that it ends just in time for the 2nd note to begin.
+	 * The 2nd note's duration will not be affected.
+	 * 
+	 * @param notes A cleaned up collection of the passed in notes
+	 */
+	public LinkedList<Node> postProcessChompStackedHits(LinkedList<Node> notes) {
+		LinkedList<Node> cleanedNotes = new LinkedList<Node>();
+		
+		for (int x = 0; x < notes.size(); ++x) {
+			NoteNode currentNote = (NoteNode)notes.get(x);
+			
+			// We have a note to process ("current note"). See if any entries in cleanedNotes have the same compareValue as currentNote.
+			// If there are other notes for the same compareValue, then see if the start time of currentNote falls BETWEEN the start time and end time of those other notes.
+			// If it DOES fall between the start and end time of another note, that note must update its end time / its duration so that it ends precisely when currentNote starts.
+			// We call this chomping - we reduce the duration of one note so that it does not overlap with another note (only when they are the same compareValue).
+			
+			for (int y = 0; y < cleanedNotes.size(); ++y ) {
+				NoteNode cleanNote = (NoteNode)cleanedNotes.get(y);
+				if (cleanNote.getOctave() == currentNote.getOctave() && cleanNote.getStep().equalsIgnoreCase(currentNote.getStep()) && cleanNote.getAlter() == currentNote.getAlter()) {
+					int cleanStartTime = cleanNote.getStartTime();
+					int cleanEndTime = cleanNote.getStartTime() + cleanNote.getDuration();
+					
+					if (currentNote.getStartTime() > cleanStartTime && currentNote.getStartTime() < cleanEndTime) {
+						
+						int durationAfterChomp = currentNote.getStartTime() - cleanNote.getStartTime();
+						System.out.println("TransMusicXML#postProcessChompStackedHits - CHOMP! Adjusting end time of note: " + cleanNote.toString() + " to be a duration of: " + durationAfterChomp + " instead.");
+						// ok, now we can apply the change
+						cleanNote.setDuration(durationAfterChomp);
+					}
+				}
+			}
+			cleanedNotes.add(currentNote);
 		}
 		
 		return cleanedNotes;
