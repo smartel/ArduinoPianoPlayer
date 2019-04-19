@@ -138,4 +138,12 @@ public class Constants {
 	public static final String OCTAVE_OPTION = "OCTAVE";
 	public static final String LOOP_OPTION = "LOOP";
 	
+	// FngWriter constants
+	// directions
+	public static final int DIR_BACKWARD = 1;
+	public static final int DIR_FORWARD = 2;
+	// instructions (the number before the command is an order of operation, that is, releasing a note takes priority over pressing it
+	public static final String INSTRUCT_RELEASE = "1-RELEASE";
+	public static final String INSTRUCT_HIT = "2-HIT";
+	
 }

@@ -113,9 +113,6 @@ public class NoteTransposer {
 								if (hand.didInit()) {
 									fw = new FngWriter();
 									
-									// TODO I'd really prefer we check for stacked push instructions in the very near future.
-									System.out.println("\nNOTE - It is STRONGLY RECOMMENDED that you manually edit the .alc file to remove any duplicate note errors that arose from bad data from the original source.\n");
-									
 									// if an optional output fng filepath wasn't provided, display the path that will be used
 									if (args.length < numMandatoryArgs+1) {
 										fngFilePath = targetFilePath.substring(0, targetFilePath.lastIndexOf(".")); // shave off the extension
