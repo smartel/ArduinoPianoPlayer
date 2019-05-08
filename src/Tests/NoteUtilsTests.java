@@ -220,7 +220,8 @@ public class NoteUtilsTests {
 	public void testOctaveZeroOnNonRest() {
 		double compVal = NoteUtils.generateCompareValue("A", 0, false, false);
 		boolean validCompVal = compVal > 0;
-		assertFalse(validCompVal);
+		// new rules made octave 0 valid per MIDI (see CompVal Chart), so this will return a valid compVal
+		assertTrue(validCompVal);
 	}
 
 	@Test
@@ -310,43 +311,43 @@ public class NoteUtilsTests {
 	@Test
 	public void testGetNoteForPosition1() {
 		String val = NoteUtils.getNoteForPosition(1);
-		assertTrue(val.equalsIgnoreCase(Constants.NOTE_A));
+		assertTrue(val.equalsIgnoreCase(Constants.NOTE_C));
 	}
 
 	@Test
 	public void testGetNoteForPosition2() {
 		String val = NoteUtils.getNoteForPosition(2);
-		assertTrue(val.equalsIgnoreCase(Constants.NOTE_B));
+		assertTrue(val.equalsIgnoreCase(Constants.NOTE_D));
 	}
 	
 	@Test
 	public void testGetNoteForPosition3() {
 		String val = NoteUtils.getNoteForPosition(3);
-		assertTrue(val.equalsIgnoreCase(Constants.NOTE_C));
+		assertTrue(val.equalsIgnoreCase(Constants.NOTE_E));
 	}
 	
 	@Test
 	public void testGetNoteForPosition4() {
 		String val = NoteUtils.getNoteForPosition(4);
-		assertTrue(val.equalsIgnoreCase(Constants.NOTE_D));
+		assertTrue(val.equalsIgnoreCase(Constants.NOTE_F));
 	}
 	
 	@Test
 	public void testGetNoteForPosition5() {
 		String val = NoteUtils.getNoteForPosition(5);
-		assertTrue(val.equalsIgnoreCase(Constants.NOTE_E));
+		assertTrue(val.equalsIgnoreCase(Constants.NOTE_G));
 	}
 	
 	@Test
 	public void testGetNoteForPosition6() {
 		String val = NoteUtils.getNoteForPosition(6);
-		assertTrue(val.equalsIgnoreCase(Constants.NOTE_F));
+		assertTrue(val.equalsIgnoreCase(Constants.NOTE_A));
 	}
 	
 	@Test
 	public void testGetNoteForPosition7() {
 		String val = NoteUtils.getNoteForPosition(7);
-		assertTrue(val.equalsIgnoreCase(Constants.NOTE_G));
+		assertTrue(val.equalsIgnoreCase(Constants.NOTE_B));
 	}
 
 	@Test
@@ -378,130 +379,130 @@ public class NoteUtilsTests {
 	// getNextNoteCV tests
 
 	@Test
-	public void testGetNextNoteCV1() { // A
+	public void testGetNextNoteCV1() { // C
 		double val = NoteUtils.getNextNoteCV(1);
 		assertTrue(val == 1.5);
 	}
 
-	public void testGetNextNoteCV1Point5() { // A sharp aka G flat
+	public void testGetNextNoteCV1Point5() { // C sharp aka D flat
 		double val = NoteUtils.getNextNoteCV(1.5);
 		assertTrue(val == 2);
 	}
 
 	@Test
-	public void testGetNextNoteCV2() { // B
+	public void testGetNextNoteCV2() { // D
 		double val = NoteUtils.getNextNoteCV(2);
-		assertTrue(val == 3);
+		assertTrue(val == 2.5);
 	}
 
 	@Test
-	public void testGetNextNoteCV3() { // C
+	public void testGetNextNoteCV3() { // E which will go to F since there's no E sharp
 		double val = NoteUtils.getNextNoteCV(3);
-		assertTrue(val == 3.5);
+		assertTrue(val == 4);
 	}
 
-	public void testGetNextNoteCV3Point5() { // C sharp aka D flat
+	public void testGetNextNoteCV3Point5() { // E sharp which technically isn't valid so... if / when we change the rules in the future this may fail, it's currently expecting the "next" value
 		double val = NoteUtils.getNextNoteCV(3.5);
 		assertTrue(val == 4);
 	}
 
 	@Test
-	public void testGetNextNoteCV4() { // D
+	public void testGetNextNoteCV4() { // F
 		double val = NoteUtils.getNextNoteCV(4);
 		assertTrue(val == 4.5);
 	}
 	
-	public void testGetNextNoteCV4Point5() { // D sharp aka E flat
+	public void testGetNextNoteCV4Point5() { // F sharp aka G flat
 		double val = NoteUtils.getNextNoteCV(4.5);
 		assertTrue(val == 5);
 	}
 
 	@Test
-	public void testGetNextNoteCV5() { // E
+	public void testGetNextNoteCV5() { // G
 		double val = NoteUtils.getNextNoteCV(5);
-		assertTrue(val == 6);
+		assertTrue(val == 5.5);
 	}
 
 	@Test
-	public void testGetNextNoteCV6() { // F
+	public void testGetNextNoteCV6() { // A
 		double val = NoteUtils.getNextNoteCV(6);
 		assertTrue(val == 6.5);
 	}
 
-	public void testGetNextNoteCV6Point5() { // F sharp aka G flat
+	public void testGetNextNoteCV6Point5() { // A sharp aka B flat
 		double val = NoteUtils.getNextNoteCV(6.5);
 		assertTrue(val == 7);
 	}
 
 	@Test
-	public void testGetNextNoteCV7() { // G
+	public void testGetNextNoteCV7() { // B which will skip straight to C since there's no B sharp
 		double val = NoteUtils.getNextNoteCV(7);
-		assertTrue(val == 7.5);
+		assertTrue(val == 8);
 	}
 
-	public void testGetNextNoteCV7Point5() { // G sharp aka A flat
+	public void testGetNextNoteCV7Point5() { // B sharp which technically isn't valid so... if / when we change the rules in the future this may fail, it's currently expecting the "next" value
 		double val = NoteUtils.getNextNoteCV(7.5);
 		assertTrue(val == 8);
 	}
 
 	@Test
-	public void testGetNextNoteCV8() { // A on 2nd octave
+	public void testGetNextNoteCV8() { // C on 2nd octave
 		double val = NoteUtils.getNextNoteCV(8);
 		assertTrue(val == 8.5);
 	}
 
 	@Test
-	public void testGetNextNoteCV8Point5() { // A sharp aka G flat on 2nd octave
+	public void testGetNextNoteCV8Point5() { // C sharp aka D flat on 2nd octave
 		double val = NoteUtils.getNextNoteCV(8.5);
 		assertTrue(val == 9);
 	}
 
 	@Test
-	public void testGetNextNoteCV15() { // A on higher octave
-		double val = NoteUtils.getNextNoteCV(15);
-		assertTrue(val == 15.5);
+	public void testGetNextNoteCV16() { // D on higher octave
+		double val = NoteUtils.getNextNoteCV(16);
+		assertTrue(val == 16.5);
 	}
 
 	@Test
-	public void testGetNextNoteCV15Point5() { // A sharp aka G flat on higher octave
-		double val = NoteUtils.getNextNoteCV(15.5);
-		assertTrue(val == 16);
+	public void testGetNextNoteCV16Point5() { // D sharp aka E flat on higher octave
+		double val = NoteUtils.getNextNoteCV(16.5);
+		assertTrue(val == 17);
 	}
 	
 	@Test
-	public void testGetNextNoteCV22() { // A on even higher octave
-		double val = NoteUtils.getNextNoteCV(22);
-		assertTrue(val == 22.5);
+	public void testGetNextNoteCV27() { // A on even higher octave
+		double val = NoteUtils.getNextNoteCV(27);
+		assertTrue(val == 27.5);
 	}
 	
 	@Test
-	public void testGetNextNoteCV22Point5() { // A sharp aka G flat on even higher octave
-		double val = NoteUtils.getNextNoteCV(22.5);
-		assertTrue(val == 23);
+	public void testGetNextNoteCV27Point5() { // A sharp aka G flat on even higher octave
+		double val = NoteUtils.getNextNoteCV(27.5);
+		assertTrue(val == 28);
 	}
 	
 	@Test
-	public void testGetNextNoteCV30() { // B meaning even higher octave + 1 note
-		double val = NoteUtils.getNextNoteCV(30);
-		assertTrue(val == 31);
+	public void testGetNextNoteCV28() { // B meaning even higher octave + 1 note
+		double val = NoteUtils.getNextNoteCV(28);
+		assertTrue(val == 29);
 	}
 	
 	@Test
-	public void testGetNextNoteCV33() { // E meaning even higher octave + a few notes, just making sure E's not-having-a-sharp is fine
-		double val = NoteUtils.getNextNoteCV(33);
-		assertTrue(val == 34);
+	public void testGetNextNoteCV31() { // E meaning even higher octave + a few notes, just making sure E's not-having-a-sharp is fine
+		double val = NoteUtils.getNextNoteCV(31);
+		assertTrue(val == 32);
 	}
 	
 	@Test
-	public void testGetNextNoteCV34() { // F meaning even higher octave + a few more notes, just making sure F having-a-sharp is fine
-		double val = NoteUtils.getNextNoteCV(34);
-		assertTrue(val == 34.5);
+	public void testGetNextNoteCV32() { // F meaning even higher octave + a few more notes, just making sure F having-a-sharp is fine
+		double val = NoteUtils.getNextNoteCV(32);
+		assertTrue(val == 32.5);
 	}
 	
 	@Test
-	public void testGetNextNoteCV35Point5() { // G sharp aka A flat on a super high octave
-		double val = NoteUtils.getNextNoteCV(35.5);
-		assertTrue(val == 36);
+	public void testGetNextNoteCV40Point5() { // G sharp aka A flat on a super high octave
+		double val = NoteUtils.getNextNoteCV(40.5);
+		assertTrue(val == 41);
 	}
 	
 	@Test
@@ -518,4 +519,144 @@ public class NoteUtilsTests {
 	
 	
 	
+	// getPrevNoteCV tests
+
+	public void testGetPrevNoteCV1Point5() { // C sharp aka D flat
+		double val = NoteUtils.getPrevNoteCV(1.5);
+		assertTrue(val == 1);
+	}
+
+	@Test
+	public void testGetPrevNoteCV2() { // D
+		double val = NoteUtils.getPrevNoteCV(2);
+		assertTrue(val == 1.5);
+	}
+
+	@Test
+	public void testGetPrevNoteCV3() { // E
+		double val = NoteUtils.getPrevNoteCV(3);
+		assertTrue(val == 2.5);
+	}
+
+	public void testGetPrevNoteCV3Point5() { // E sharp which technically isn't valid so... if / when we change the rules in the future this may fail, it's currently expecting the "previous" value
+		double val = NoteUtils.getPrevNoteCV(3.5);
+		assertTrue(val == 3);
+	}
+
+	@Test
+	public void testGetPrevNoteCV4() { // F which will go to E since there's no E sharp
+		double val = NoteUtils.getPrevNoteCV(4);
+		assertTrue(val == 3);
+	}
+	
+	public void testGetPrevNoteCV4Point5() { // F sharp aka G flat
+		double val = NoteUtils.getPrevNoteCV(4.5);
+		assertTrue(val == 4);
+	}
+
+	@Test
+	public void testGetPrevNoteCV5() { // G
+		double val = NoteUtils.getPrevNoteCV(5);
+		assertTrue(val == 4.5);
+	}
+
+	@Test
+	public void testGetPrevNoteCV6() { // A
+		double val = NoteUtils.getPrevNoteCV(6);
+		assertTrue(val == 5.5);
+	}
+
+	public void testGetPrevNoteCV6Point5() { // A sharp aka B flat
+		double val = NoteUtils.getPrevNoteCV(6.5);
+		assertTrue(val == 6);
+	}
+
+	@Test
+	public void testGetPrevNoteCV7() { // B
+		double val = NoteUtils.getPrevNoteCV(7);
+		assertTrue(val == 6.5);
+	}
+
+	public void testGetPrevNoteCV7Point5() { // B sharp which technically isn't valid so... if / when we change the rules in the future this may fail, it's currently expecting the "next" value
+		double val = NoteUtils.getPrevNoteCV(7.5);
+		assertTrue(val == 7);
+	}
+
+	@Test
+	public void testGetPrevNoteCV8() { // C on 2nd octave which will skip straight to B since there's no B sharp
+		double val = NoteUtils.getPrevNoteCV(8);
+		assertTrue(val == 7);
+	}
+
+	@Test
+	public void testGetPrevNoteCV8Point5() { // C sharp aka D flat on 2nd octave
+		double val = NoteUtils.getPrevNoteCV(8.5);
+		assertTrue(val == 8);
+	}
+
+	@Test
+	public void testGetPrevNoteCV16() { // D on higher octave
+		double val = NoteUtils.getPrevNoteCV(16);
+		assertTrue(val == 15.5);
+	}
+
+	@Test
+	public void testGetPrevNoteCV16Point5() { // D sharp aka E flat on higher octave
+		double val = NoteUtils.getPrevNoteCV(16.5);
+		assertTrue(val == 16);
+	}
+	
+	@Test
+	public void testGetPrevNoteCV27() { // A on even higher octave
+		double val = NoteUtils.getPrevNoteCV(27);
+		assertTrue(val == 26.5);
+	}
+	
+	@Test
+	public void testGetPrevNoteCV27Point5() { // A sharp aka G flat on even higher octave
+		double val = NoteUtils.getPrevNoteCV(27.5);
+		assertTrue(val == 27);
+	}
+	
+	@Test
+	public void testGetPrevNoteCV28() { // B meaning even higher octave + 1 note
+		double val = NoteUtils.getPrevNoteCV(28);
+		assertTrue(val == 27.5);
+	}
+	
+	@Test
+	public void testGetPrevNoteCV31() { // E meaning even higher octave + a few notes
+		double val = NoteUtils.getPrevNoteCV(31);
+		assertTrue(val == 30.5);
+	}
+	
+	@Test
+	public void testGetPrevNoteCV32() { // F meaning even higher octave + a few more notes, should skip straight to E
+		double val = NoteUtils.getPrevNoteCV(32);
+		assertTrue(val == 31);
+	}
+	
+	@Test
+	public void testGetPrevNoteCV40Point5() { // G sharp aka A flat on a super high octave
+		double val = NoteUtils.getPrevNoteCV(40.5);
+		assertTrue(val == 40);
+	}
+	
+	@Test
+	public void testGetPrevNoteCVZero() { // 0, so it should be invalid
+		double val = NoteUtils.getPrevNoteCV(0);
+		assertTrue(val == -1);
+	}
+	
+	@Test
+	public void testGetPrevNoteCV1() { // 1, which can't have any notes prior to it as it is the first key, so it should be invalid
+		double val = NoteUtils.getPrevNoteCV(1);
+		assertTrue(val == -1);
+	}
+	
+	@Test
+	public void testGetPrevNoteCVNegative() { // negative, so it should be invalid
+		double val = NoteUtils.getPrevNoteCV(-10);
+		assertTrue(val == -1);
+	}
 }

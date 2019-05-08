@@ -137,6 +137,7 @@ public class Constants {
 	public static final String BPM_OPTION = "BPM";
 	public static final String OCTAVE_OPTION = "OCTAVE";
 	public static final String LOOP_OPTION = "LOOP";
+	public static final String SHIFT_OPTION = "SHIFT";
 	
 	// FngWriter constants
 	// directions

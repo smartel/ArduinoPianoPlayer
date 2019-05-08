@@ -215,6 +215,8 @@ public class NoteUtils {
 		} else {
 			if (compareVal % 1 == 0.5) { // if we are on a sharp, then we know we just need to add 0.5 to get to the next note
 				nextCompVal = compareVal + 0.5;
+				// TODO just a note to self - should we verify the integrity of the supplied compareValue?
+				//      If supplied with an invalid compareValue (like 3.5, an E sharp), we could either: error out, display a warning, or still provide the next mathematical value
 			} else {
 				// we know we are not on a sharp/flat, so we're on A,B,C,D,E,F,G. B and E do not have sharps.
 				// narrow it down to one octave, so we solely had the "Note Position within an octave", ie, 1=A, 2=B, ..., 7=G
@@ -231,6 +233,43 @@ public class NoteUtils {
 		}
 		
 		return nextCompVal;
+	}
+	
+	/**
+	 * NOTE: Strongly based on NoteUtils#getNextNoteCV
+	 * Given a compareValue, this will determine and return the compareValue immediately below the given value, regardless of whether it is a whole note skip or a sharp.
+	 * (so, it determines if 0.5 or if 1.0 needs to be subtracted from the current compare value).
+	 * @param compareVal the compareValue of the current note, to generate the previous note's value from
+	 * @return the compareValue of the note immediately before the supplied note, or -1 if an invalid compareVal or too low compareVal was supplied
+	 *         (a compareVal of 1 is treated as the lowest note possible, so any note less than or equal to 1 will return -1)
+	 */
+	public static double getPrevNoteCV(double compareVal) {
+		double prevCompVal = -1;
+		
+		// ensure we have a valid compareValue to work with (larger than the theoretical minimum key)
+		if (compareVal <= Constants.MIN_THEORETICAL_COMPARE_VALUE) {
+			System.out.println("NoteUtils#getNextNoteCV - error - invalid compare value supplied to generate the previous note from. Value is too low. Supplied compareVal: " + compareVal);
+		} else {
+			if (compareVal % 1 == 0.5) { // if we are on a sharp, then we know we just need to subtract 0.5 to get to the previous note
+				prevCompVal = compareVal - 0.5;
+				// TODO just a note to self - should we verify the integrity of the supplied compareValue?
+				//      If supplied with an invalid compareValue (like 3.5, an E sharp), we could either: error out, display a warning, or still provide the previous mathematical value
+			} else {
+				// we know we are not on a sharp/flat, so we're on A,B,C,D,E,F,G. B and E do not have sharps.
+				// narrow it down to one octave, so we solely had the "Note Position within an octave", ie, 1=A, 2=B, ..., 7=G
+				int temp = (int)compareVal;
+				while (temp > 7) {
+					temp -= 7;
+				}
+				if (temp == Constants.C_POS || temp == Constants.F_POS) { // if C or F, we subtract one to the given compareValue and return it, since there is no sharp note for B or E
+					prevCompVal = compareVal - 1;
+				} else { // otherwise, it has a sharp
+					prevCompVal = compareVal - 0.5;
+				}
+			}
+		}
+		
+		return prevCompVal;
 	}
 	
 }

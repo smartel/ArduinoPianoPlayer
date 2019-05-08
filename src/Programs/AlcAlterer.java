@@ -41,6 +41,7 @@ public class AlcAlterer {
 	// a. Mass adjusting the bpm after-the-fact (by multiplying all durations and start times)
 	// b. "Increase every octave by x" option. This could be negative, which means decreasing every octave by x instead. A flag can be included to cap notes at boundaries or delete them.
 	// c. Looper - will loop the song an additional x times within the .alc file
+	// d. Shifter - will shift all notes in the song x steps (either positive of negative), with positive numbers moving keys that many notes higher, and negative moving that many notes lower, deleting any notes that go out of range.
 
 	
 	// 4. Perform cleanup again
@@ -75,6 +76,7 @@ public class AlcAlterer {
 							   "Optionals set 1: \"" + Constants.BPM_OPTION + "\" {integer} - if the first optional argument is \"" + Constants.BPM_OPTION + "\", and the second is a positive integer, the integer will be used as a bpm-multiplier on the target alc file.\n" +
 							   "Optionals set 2: \"" + Constants.OCTAVE_OPTION + "\" {integer} {\"true\" or \"false\"} - if the first optional argument is \"" + Constants.OCTAVE_OPTION + "\", and the second is a non-zero integer, the integer will be used to adjust notes up (if positive) or down (if negative) that many octaves within the target alc file. If the 3rd optional argument is \"true\", than any notes pushed below octave 1 or above octave 8 will be DELETED, otherwise they will cap at octave 1 or 8. By default, notes cap at the boundaries.\n" +
 							   "Optionals set 3: \"" + Constants.LOOP_OPTION + "\" {integer} - will loop the song an additional {integer} number of times in the alc file.\n" +
+							   "Optionals set 4: \"" + Constants.SHIFT_OPTION + "\" {integer} - will shift all keys the desired number of compare values up (if positive) or down (if negative) the piano.\n" +
 		                       "Exiting."); // more options TBD, will need to be added to usage as we implement them
 		} else {
 			String inputAlcPath = args[0];
@@ -198,6 +200,50 @@ public class AlcAlterer {
 						System.out.println("AlcAlterer#main - error - Please provide a positive integer value to use as the desired number of loops. Exiting.");
 						sheet = null;
 					}
+				} else if (args[3].equalsIgnoreCase(Constants.SHIFT_OPTION)) {
+					System.out.println("SHIFT NOT YET IMPLEMENTED"); // TODO remove
+					/* TODO tbd
+					 *      do we want a wrapper around getNExt / getPrev compVal, to call them x number of times to adjust every note in the song, and we delete notes outside of min / max theoretical constnat?
+					if (args.length >= 5) {
+						try {
+							boolean doDeleteNotes = false;
+							if (args.length >= 6) {
+								String capFlag = args[5];
+								if (capFlag.equalsIgnoreCase("true")) {
+									doDeleteNotes = true;
+								}
+							}
+							int octaveAdjustment = Integer.parseInt(args[4]);
+							if (octaveAdjustment == 0) {
+								System.out.println("AlcAlterer#main - error - Please provide a non-zero integer value to use as the desired octave adjustment. Exiting.");
+							} else {
+								
+								if (Math.abs(octaveAdjustment) >= Constants.MAX_PIANO_OCTAVE && doDeleteNotes) {
+									System.out.println("AlcAlterer#main - warning - The program will continue, but it is strongly recommended not to use such a large octave adjustment value with the delete flag turned on, as all notes will just be pushed to the highest / lowest octave and deleted.");
+								}
+								
+								// we have a valid value - loop through the musicsheet and update every note's octave by the supplied amount, "deleting" it if necessary (over the bounds. we'll just turn it into a rest, cleanup will later delete it).
+								
+								LinkedList<MusicSlice> slices = sheet.getSlices();
+								for (int x = 0; x < slices.size(); ++x) {
+									MusicSlice slice = slices.get(x);
+									Iterator<MusicNote> iter = slice.getNotes().iterator();
+									while (iter.hasNext()) {
+										MusicNote note = iter.next();
+										note.applyOctaveAdjustment(octaveAdjustment, doDeleteNotes);
+									}
+								}
+							}
+							
+							sheet.setInfoLine(sheet.getInfoLine() + " - AlcAlterer adjusted octave value by " + octaveAdjustment + ".");
+						} catch (NumberFormatException e) {
+							System.out.println("AlcAlterer#main - error - Please provide a non-zero integer value to use as the desired octave adjustment. Exiting.");
+						}
+					} else {
+						System.out.println("AlcAlterer#main - error - Please provide a non-zero integer value to use as the desired octave adjustment. Exiting.");
+						sheet = null;
+					}
+					*/
 				}
 			}
 			
