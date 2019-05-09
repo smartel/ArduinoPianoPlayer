@@ -53,7 +53,7 @@ public class AlcAlterer {
 	
 
 	// Potential unimplemented change ideas are:
-	// x. shift left or right by x steps / tones? including half steps, i mean, go from an f to an f sharp? or be able to change from a major key to minor key and so on?
+	// x. Research needed - what goes into changing a song's key - differences major vs minor key? Would the shifter as implemented be able to handle it, or need something new?
 	// x. I'm not sure how easy it would be to mark a section of the alc file for deletion. Like, say you wanted to delete all notes that start from 1400ms to 1800ms in a song.
 	//    You'd need to be able to specify a start point, an end point, and then the program would mass update the start times of every note after 1800ms to what, start 400ms earlier?
 	//    Not sure how valuable this would be yet.
@@ -201,28 +201,13 @@ public class AlcAlterer {
 						sheet = null;
 					}
 				} else if (args[3].equalsIgnoreCase(Constants.SHIFT_OPTION)) {
-					System.out.println("SHIFT NOT YET IMPLEMENTED"); // TODO remove
-					/* TODO tbd
-					 *      do we want a wrapper around getNExt / getPrev compVal, to call them x number of times to adjust every note in the song, and we delete notes outside of min / max theoretical constnat?
 					if (args.length >= 5) {
 						try {
-							boolean doDeleteNotes = false;
-							if (args.length >= 6) {
-								String capFlag = args[5];
-								if (capFlag.equalsIgnoreCase("true")) {
-									doDeleteNotes = true;
-								}
-							}
-							int octaveAdjustment = Integer.parseInt(args[4]);
-							if (octaveAdjustment == 0) {
-								System.out.println("AlcAlterer#main - error - Please provide a non-zero integer value to use as the desired octave adjustment. Exiting.");
+							int shiftAmount = Integer.parseInt(args[4]);
+							if (shiftAmount == 0) {
+								System.out.println("AlcAlterer#main - error - Please provide a non-zero integer value to use as the desired number of times to shift (positive for upward, negative for downward). Exiting.");
 							} else {
-								
-								if (Math.abs(octaveAdjustment) >= Constants.MAX_PIANO_OCTAVE && doDeleteNotes) {
-									System.out.println("AlcAlterer#main - warning - The program will continue, but it is strongly recommended not to use such a large octave adjustment value with the delete flag turned on, as all notes will just be pushed to the highest / lowest octave and deleted.");
-								}
-								
-								// we have a valid value - loop through the musicsheet and update every note's octave by the supplied amount, "deleting" it if necessary (over the bounds. we'll just turn it into a rest, cleanup will later delete it).
+								// we have a valid value - loop through the musicsheet and shift every note by the supplied amount, "deleting" it if necessary (if it goes over the bounds, it turns into a rest, which cleanup will later delete).
 								
 								LinkedList<MusicSlice> slices = sheet.getSlices();
 								for (int x = 0; x < slices.size(); ++x) {
@@ -230,20 +215,19 @@ public class AlcAlterer {
 									Iterator<MusicNote> iter = slice.getNotes().iterator();
 									while (iter.hasNext()) {
 										MusicNote note = iter.next();
-										note.applyOctaveAdjustment(octaveAdjustment, doDeleteNotes);
+										note.applyShift(shiftAmount);
 									}
 								}
 							}
 							
-							sheet.setInfoLine(sheet.getInfoLine() + " - AlcAlterer adjusted octave value by " + octaveAdjustment + ".");
+							sheet.setInfoLine(sheet.getInfoLine() + " - AlcAlterer shifted notes by " + shiftAmount + ". Any notes shifted out of range have been turned into rests.");
 						} catch (NumberFormatException e) {
-							System.out.println("AlcAlterer#main - error - Please provide a non-zero integer value to use as the desired octave adjustment. Exiting.");
+							System.out.println("AlcAlterer#main - error - Please provide a non-zero integer value to use as the desired shift amount. Exiting.");
 						}
 					} else {
-						System.out.println("AlcAlterer#main - error - Please provide a non-zero integer value to use as the desired octave adjustment. Exiting.");
+						System.out.println("AlcAlterer#main - error - Please provide a non-zero integer value to use as the desired shift amount. Exiting.");
 						sheet = null;
 					}
-					*/
 				}
 			}
 			

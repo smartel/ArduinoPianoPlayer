@@ -155,7 +155,7 @@ public class MusicNote implements Comparable<MusicNote> {
 			 (note.equalsIgnoreCase(Constants.NOTE_F) && isFlat) ) {
 			
 			// Since we are basing this off of a "compare value", we can't tell if it was meant to be a B sharp (and thus, a C), or a C flat (and thus, a B),
-			// since both of those would have a compare value of "9.5"
+			// since both of those would have a compare value of "6.5"
 			
 			// We're just going to set a compare value of -1 and error out, we don't have a way to 100% guarantee what this note should really be.
 			compareValue = -1;
@@ -363,6 +363,32 @@ public class MusicNote implements Comparable<MusicNote> {
 		}
 		
 		return hitBound;
+	}
+	
+	/**
+	 * Given a shift adjustment (a positive or negative integer), shift the note that many compare values to the left (down / negative) or right (up / positive).
+	 * If the note goes out of range (too low or too high), turn it into a rest, effectively deleting it. Sheet music cleanup will later remove it from the slice.
+	 * @param shiftAmt non-zero integer value to shift the note's current location by.
+	 */
+	public void applyShift(int shiftAmt) {
+
+		double newCompVal = NoteUtils.getShiftedCV(compareValue, shiftAmt);
+		if (newCompVal == -1) {
+			// turn this note into a rest
+			note = Constants.NOTE_REST;
+			octave = Constants.REST_OCTAVE_VALUE;
+			isSharp = false;
+			isFlat = false;
+			compareValue = Constants.REST_COMP_VALUE;
+		} else {
+			MusicNote tempNote = new MusicNote(newCompVal, duration);
+			compareValue = tempNote.compareValue;
+			note = tempNote.note;
+			octave = tempNote.octave;
+			isSharp = tempNote.isSharp;
+			isFlat = tempNote.isFlat;
+			// duration won't have changed, and remainingDuration shouldn't apply here.
+		}
 	}
 	
 	

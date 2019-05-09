@@ -384,6 +384,7 @@ public class NoteUtilsTests {
 		assertTrue(val == 1.5);
 	}
 
+	@Test
 	public void testGetNextNoteCV1Point5() { // C sharp aka D flat
 		double val = NoteUtils.getNextNoteCV(1.5);
 		assertTrue(val == 2);
@@ -401,9 +402,10 @@ public class NoteUtilsTests {
 		assertTrue(val == 4);
 	}
 
-	public void testGetNextNoteCV3Point5() { // E sharp which technically isn't valid so... if / when we change the rules in the future this may fail, it's currently expecting the "next" value
+	@Test
+	public void testGetNextNoteCV3Point5() { // E sharp which should get marked invalid
 		double val = NoteUtils.getNextNoteCV(3.5);
-		assertTrue(val == 4);
+		assertTrue(val == -1);
 	}
 
 	@Test
@@ -411,7 +413,8 @@ public class NoteUtilsTests {
 		double val = NoteUtils.getNextNoteCV(4);
 		assertTrue(val == 4.5);
 	}
-	
+
+	@Test
 	public void testGetNextNoteCV4Point5() { // F sharp aka G flat
 		double val = NoteUtils.getNextNoteCV(4.5);
 		assertTrue(val == 5);
@@ -429,6 +432,7 @@ public class NoteUtilsTests {
 		assertTrue(val == 6.5);
 	}
 
+	@Test
 	public void testGetNextNoteCV6Point5() { // A sharp aka B flat
 		double val = NoteUtils.getNextNoteCV(6.5);
 		assertTrue(val == 7);
@@ -440,9 +444,10 @@ public class NoteUtilsTests {
 		assertTrue(val == 8);
 	}
 
-	public void testGetNextNoteCV7Point5() { // B sharp which technically isn't valid so... if / when we change the rules in the future this may fail, it's currently expecting the "next" value
+	@Test
+	public void testGetNextNoteCV7Point5() { // B sharp which should get marked invalid
 		double val = NoteUtils.getNextNoteCV(7.5);
-		assertTrue(val == 8);
+		assertTrue(val == -1);
 	}
 
 	@Test
@@ -521,6 +526,7 @@ public class NoteUtilsTests {
 	
 	// getPrevNoteCV tests
 
+	@Test
 	public void testGetPrevNoteCV1Point5() { // C sharp aka D flat
 		double val = NoteUtils.getPrevNoteCV(1.5);
 		assertTrue(val == 1);
@@ -538,9 +544,10 @@ public class NoteUtilsTests {
 		assertTrue(val == 2.5);
 	}
 
-	public void testGetPrevNoteCV3Point5() { // E sharp which technically isn't valid so... if / when we change the rules in the future this may fail, it's currently expecting the "previous" value
+	@Test
+	public void testGetPrevNoteCV3Point5() { // E sharp which should get marked invalid
 		double val = NoteUtils.getPrevNoteCV(3.5);
-		assertTrue(val == 3);
+		assertTrue(val == -1);
 	}
 
 	@Test
@@ -548,7 +555,8 @@ public class NoteUtilsTests {
 		double val = NoteUtils.getPrevNoteCV(4);
 		assertTrue(val == 3);
 	}
-	
+
+	@Test
 	public void testGetPrevNoteCV4Point5() { // F sharp aka G flat
 		double val = NoteUtils.getPrevNoteCV(4.5);
 		assertTrue(val == 4);
@@ -566,6 +574,7 @@ public class NoteUtilsTests {
 		assertTrue(val == 5.5);
 	}
 
+	@Test
 	public void testGetPrevNoteCV6Point5() { // A sharp aka B flat
 		double val = NoteUtils.getPrevNoteCV(6.5);
 		assertTrue(val == 6);
@@ -577,9 +586,10 @@ public class NoteUtilsTests {
 		assertTrue(val == 6.5);
 	}
 
-	public void testGetPrevNoteCV7Point5() { // B sharp which technically isn't valid so... if / when we change the rules in the future this may fail, it's currently expecting the "next" value
+	@Test
+	public void testGetPrevNoteCV7Point5() { // B sharp which should get marked invalid
 		double val = NoteUtils.getPrevNoteCV(7.5);
-		assertTrue(val == 7);
+		assertTrue(val == -1);
 	}
 
 	@Test
@@ -659,4 +669,346 @@ public class NoteUtilsTests {
 		double val = NoteUtils.getPrevNoteCV(-10);
 		assertTrue(val == -1);
 	}
+	
+	// GetShiftedCV Tests
+	
+	@Test
+	public void testGetShiftedCVZeroShifts() { // invalid number of shifts (0)
+		double val = NoteUtils.getShiftedCV(8, 0);
+		assertTrue(val == -1);
+	}
+
+	@Test
+	public void testGetShiftedCVZeroCV() { // invalid starting CV (0)
+		double val = NoteUtils.getShiftedCV(0, 1);
+		assertTrue(val == -1);
+	}
+
+	@Test
+	public void testGetShiftedCVTooHighCV() { // invalid starting CV (too high)
+		double val = NoteUtils.getShiftedCV(80, 1);
+		assertTrue(val == -1);
+	}
+
+	@Test
+	public void testGetShiftedCVTooLowCV() { // invalid starting CV (negative)
+		double val = NoteUtils.getShiftedCV(-2, 1);
+		assertTrue(val == -1);
+	}
+
+	@Test
+	public void testGetShiftedCVMinCVUp() { // bound checking on min cv
+		double val = NoteUtils.getShiftedCV(1, 1);
+		assertTrue(val == 1.5);
+	}
+
+	@Test
+	public void testGetShiftedCVMinCVDown() { // bound checking on min cv
+		double val = NoteUtils.getShiftedCV(1, -1);
+		assertTrue(val == -1);
+	}
+
+	@Test
+	public void testGetShiftedCVMaxCVUp() { // bound checking on max cv
+		double val = NoteUtils.getShiftedCV(Constants.MAX_THEORETICAL_COMPARE_VALUE, 1);
+		assertTrue(val == -1);
+	}
+
+	@Test
+	public void testGetShiftedCVMaxCVDown() { // bound checking on max cv
+		double val = NoteUtils.getShiftedCV(Constants.MAX_THEORETICAL_COMPARE_VALUE, -1);
+		assertTrue(val == 76.5);
+	}
+
+	@Test
+	public void testGetShiftedCVUpOneOctave() { // full octave up
+		double val = NoteUtils.getShiftedCV(8, 12);
+		assertTrue(val == 15);
+	}
+
+	@Test
+	public void testGetShiftedCVUpTwoOctaves() { // two full octaves up, starting on a sharp
+		double val = NoteUtils.getShiftedCV(13.5, 24);
+		assertTrue(val == 27.5);
+	}
+
+	@Test
+	public void testGetShiftedCVDownOneOctave() { // full octave down, starting on a sharp
+		double val = NoteUtils.getShiftedCV(32.5, -12);
+		assertTrue(val == 25.5);
+	}
+
+	@Test
+	public void testGetShiftedCVDownTwoOctaves() { // two full octaves down
+		double val = NoteUtils.getShiftedCV(52, -24);
+		assertTrue(val == 38);
+	}
+
+	@Test
+	public void testGetShiftedCVAllTheWayUp() { // from min to max
+		double val = NoteUtils.getShiftedCV(1, 131);
+		assertTrue(val == 77);
+	}
+
+	@Test
+	public void testGetShiftedCVAllTheWayDown() { // from max to min
+		double val = NoteUtils.getShiftedCV(77, -131);
+		assertTrue(val == 1);
+	}
+	
+	// the following are all sequential steps up and down (a to a#, a# to b, b to c, c to c#, c# to d, ...)
+	@Test
+	public void testGetShiftedCVPosC1() {
+		double val = NoteUtils.getShiftedCV(8, 1);
+		assertTrue(val == 8.5);
+	}
+	@Test
+	public void testGetShiftedCVPosC2() {
+		double val = NoteUtils.getShiftedCV(8, 2);
+		assertTrue(val == 9);
+	}
+	@Test
+	public void testGetShiftedCVPosC3() {
+		double val = NoteUtils.getShiftedCV(8, 3);
+		assertTrue(val == 9.5);
+	}
+	@Test
+	public void testGetShiftedCVPosC4() {
+		double val = NoteUtils.getShiftedCV(8, 4);
+		assertTrue(val == 10);
+	}
+	@Test
+	public void testGetShiftedCVPosC5() {
+		double val = NoteUtils.getShiftedCV(8, 5);
+		assertTrue(val == 11);
+	}
+	@Test
+	public void testGetShiftedCVPosC6() {
+		double val = NoteUtils.getShiftedCV(8, 6);
+		assertTrue(val == 11.5);
+	}
+	@Test
+	public void testGetShiftedCVPosC7() {
+		double val = NoteUtils.getShiftedCV(8, 7);
+		assertTrue(val == 12);
+	}
+	@Test
+	public void testGetShiftedCVPosC8() {
+		double val = NoteUtils.getShiftedCV(8, 8);
+		assertTrue(val == 12.5);
+	}
+	@Test
+	public void testGetShiftedCVPosC9() {
+		double val = NoteUtils.getShiftedCV(8, 9);
+		assertTrue(val == 13);
+	}
+	@Test
+	public void testGetShiftedCVPosC10() {
+		double val = NoteUtils.getShiftedCV(8, 10);
+		assertTrue(val == 13.5);
+	}
+	@Test
+	public void testGetShiftedCVPosC11() {
+		double val = NoteUtils.getShiftedCV(8, 11);
+		assertTrue(val == 14);
+	}
+	@Test
+	public void testGetShiftedCVPosC12() {
+		double val = NoteUtils.getShiftedCV(8, 12);
+		assertTrue(val == 15);
+	}
+	@Test
+	public void testGetShiftedCVPosC13() {
+		double val = NoteUtils.getShiftedCV(8, 13);
+		assertTrue(val == 15.5);
+	}
+	@Test
+	public void testGetShiftedCVNegC1() {
+		double val = NoteUtils.getShiftedCV(36, -1);
+		assertTrue(val == 35);
+	}
+	@Test
+	public void testGetShiftedCVNegC2() {
+		double val = NoteUtils.getShiftedCV(36, -2);
+		assertTrue(val == 34.5);
+	}
+	@Test
+	public void testGetShiftedCVNegC3() {
+		double val = NoteUtils.getShiftedCV(36, -3);
+		assertTrue(val == 34);
+	}
+	@Test
+	public void testGetShiftedCVNegC4() {
+		double val = NoteUtils.getShiftedCV(36, -4);
+		assertTrue(val == 33.5);
+	}
+	@Test
+	public void testGetShiftedCVNegC5() {
+		double val = NoteUtils.getShiftedCV(36, -5);
+		assertTrue(val == 33);
+	}
+	@Test
+	public void testGetShiftedCVNegC6() {
+		double val = NoteUtils.getShiftedCV(36, -6);
+		assertTrue(val == 32.5);
+	}
+	@Test
+	public void testGetShiftedCVNegC7() {
+		double val = NoteUtils.getShiftedCV(36, -7);
+		assertTrue(val == 32);
+	}
+	@Test
+	public void testGetShiftedCVNegC8() {
+		double val = NoteUtils.getShiftedCV(36, -8);
+		assertTrue(val == 31);
+	}
+	@Test
+	public void testGetShiftedCVNegC9() {
+		double val = NoteUtils.getShiftedCV(36, -9);
+		assertTrue(val == 30.5);
+	}
+	@Test
+	public void testGetShiftedCVNegC10() {
+		double val = NoteUtils.getShiftedCV(36, -10);
+		assertTrue(val == 30);
+	}
+	@Test
+	public void testGetShiftedCVNegC11() {
+		double val = NoteUtils.getShiftedCV(36, -11);
+		assertTrue(val == 29.5);
+	}
+	@Test
+	public void testGetShiftedCVNegC12() {
+		double val = NoteUtils.getShiftedCV(36, -12);
+		assertTrue(val == 29);
+	}
+	@Test
+	public void testGetShiftedCVNegC13() {
+		double val = NoteUtils.getShiftedCV(36, -13);
+		assertTrue(val == 28);
+	}
+	
+
+	
+	// VerifyValidNonRestCompareValue tests
+	
+	@Test
+	public void testVerifyValidCompVal0() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(Constants.REST_COMP_VALUE);
+		assertFalse(isValid);
+	}
+	
+	@Test
+	public void testVerifyValidCompValMinBounds() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(Constants.MIN_THEORETICAL_COMPARE_VALUE);
+		assertTrue(isValid);
+	}
+	
+	@Test
+	public void testVerifyValidCompValBelowMinBounds1() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(Constants.MIN_THEORETICAL_COMPARE_VALUE-1);
+		assertFalse(isValid);
+	}
+
+	@Test
+	public void testVerifyValidCompValBelowMinBounds2() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(Constants.MIN_THEORETICAL_COMPARE_VALUE-0.5);
+		assertFalse(isValid);
+	}
+	
+	@Test
+	public void testVerifyValidCompValMaxBounds() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(Constants.MAX_THEORETICAL_COMPARE_VALUE);
+		assertTrue(isValid);
+	}
+	
+	@Test
+	public void testVerifyValidCompValAboveMaxBounds1() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(Constants.MAX_THEORETICAL_COMPARE_VALUE+1);
+		assertFalse(isValid);
+	}
+
+	@Test
+	public void testVerifyValidCompValAboveMaxBounds2() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(Constants.MAX_THEORETICAL_COMPARE_VALUE+0.5);
+		assertFalse(isValid);
+	}
+	
+	// the span of one octave, including B# and E# which will be marked invalid
+	@Test
+	public void testVerifyValidCompValC() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(8);
+		assertTrue(isValid);
+	}
+	@Test
+	public void testVerifyValidCompValCSharp() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(8.5);
+		assertTrue(isValid);
+	}
+	@Test
+	public void testVerifyValidCompValD() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(9);
+		assertTrue(isValid);
+	}
+	@Test
+	public void testVerifyValidCompValDSharp() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(9.5);
+		assertTrue(isValid);
+	}
+	@Test
+	public void testVerifyValidCompValE() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(10);
+		assertTrue(isValid);
+	}
+	@Test
+	public void testVerifyValidCompValESharp() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(10.5);
+		assertFalse(isValid);
+	}
+	@Test
+	public void testVerifyValidCompValF() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(11);
+		assertTrue(isValid);
+	}
+	@Test
+	public void testVerifyValidCompValFSharp() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(11.5);
+		assertTrue(isValid);
+	}
+	@Test
+	public void testVerifyValidCompValG() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(12);
+		assertTrue(isValid);
+	}
+	@Test
+	public void testVerifyValidCompValGSharp() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(12.5);
+		assertTrue(isValid);
+	}
+	@Test
+	public void testVerifyValidCompValA() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(13);
+		assertTrue(isValid);
+	}
+	@Test
+	public void testVerifyValidCompValASharp() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(13.5);
+		assertTrue(isValid);
+	}
+	@Test
+	public void testVerifyValidCompValB() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(14);
+		assertTrue(isValid);
+	}
+	@Test
+	public void testVerifyValidCompValBSharp() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(14.5);
+		assertFalse(isValid);
+	}
+	@Test
+	public void testVerifyValidCompValCTwo() {
+		boolean isValid = NoteUtils.verifyValidNonRestCompareValue(15);
+		assertTrue(isValid);
+	}
+	
 }

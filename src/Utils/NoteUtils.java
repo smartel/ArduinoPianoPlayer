@@ -214,9 +214,14 @@ public class NoteUtils {
 			System.out.println("NoteUtils#getNextNoteCV - error - invalid compare value supplied to generate the next note from. Supplied compareVal: " + compareVal);
 		} else {
 			if (compareVal % 1 == 0.5) { // if we are on a sharp, then we know we just need to add 0.5 to get to the next note
-				nextCompVal = compareVal + 0.5;
-				// TODO just a note to self - should we verify the integrity of the supplied compareValue?
-				//      If supplied with an invalid compareValue (like 3.5, an E sharp), we could either: error out, display a warning, or still provide the next mathematical value
+				
+				// Verify a valid compareVal was supplied, and not something like a 3.5 (an E sharp). If an invalid starting point was supplied, return -1
+				if (verifyValidNonRestCompareValue(compareVal) == false) {
+					nextCompVal = -1;
+				} else {
+					nextCompVal = compareVal + 0.5;
+				}
+				
 			} else {
 				// we know we are not on a sharp/flat, so we're on A,B,C,D,E,F,G. B and E do not have sharps.
 				// narrow it down to one octave, so we solely had the "Note Position within an octave", ie, 1=A, 2=B, ..., 7=G
@@ -251,9 +256,14 @@ public class NoteUtils {
 			System.out.println("NoteUtils#getNextNoteCV - error - invalid compare value supplied to generate the previous note from. Value is too low. Supplied compareVal: " + compareVal);
 		} else {
 			if (compareVal % 1 == 0.5) { // if we are on a sharp, then we know we just need to subtract 0.5 to get to the previous note
-				prevCompVal = compareVal - 0.5;
-				// TODO just a note to self - should we verify the integrity of the supplied compareValue?
-				//      If supplied with an invalid compareValue (like 3.5, an E sharp), we could either: error out, display a warning, or still provide the previous mathematical value
+				
+				// Verify a valid compareVal was supplied, and not something like a 3.5 (an E sharp). If an invalid starting point was supplied, return -1
+				if (verifyValidNonRestCompareValue(compareVal) == false) {
+					prevCompVal = -1;
+				} else {
+					prevCompVal = compareVal - 0.5;
+				}
+				
 			} else {
 				// we know we are not on a sharp/flat, so we're on A,B,C,D,E,F,G. B and E do not have sharps.
 				// narrow it down to one octave, so we solely had the "Note Position within an octave", ie, 1=A, 2=B, ..., 7=G
@@ -272,4 +282,88 @@ public class NoteUtils {
 		return prevCompVal;
 	}
 	
+	/**
+	 * Given a compare Value to start at, and a number of shifts to take (positive = forward, negative = backward),
+	 * move that many notes in that direction and return the CV landed on, if valid. 
+	 * If invalid (too far past the min or max theoretical key), it will return -1 instead (although I had considered turning the cv into a rest aka 0, effectively "deleting" it)
+	 * @param compareVal starting point to shift from
+	 * @param numShifts the number of shifts to take (positive = forward, negative = backward)
+	 * @return the compare value shifted to, or -1 if invalid / past the theoretical min / max
+	 */
+	public static double getShiftedCV(double compareVal, double numShifts) {
+		double result = compareVal;
+
+		if (numShifts == 0 || compareVal == 0 || verifyValidNonRestCompareValue(compareVal) == false) {
+			System.out.println("NoteUtils#getShiftedCV - error - invalid base compare value or number of shifts supplied to generate the desired CV from. Values must be a valid non-zero compareVal and a non-zero number of shifts, otherwise no shifts can be applied. Supplied compareVal: " + compareVal + ", numShifts: " + numShifts);
+			result = -1;
+		} else if (numShifts > 0) {
+			// positive number of shifts, so we move forward - up the piano
+			for (int x = 0; x < numShifts; ++x) {
+				result = getNextNoteCV(result);
+			}
+		} else if (numShifts < 0) {
+			// negative number of shifts, so we move downward - down the piano
+			for (int x = 0; x > numShifts; --x) {
+				result = getPrevNoteCV(result);
+			}
+		}
+		
+		// verify the resulting compareVal is valid (not past theoretical max, ...)
+		if (result != -1) {
+			if (verifyValidNonRestCompareValue(result) == false) {
+				result = -1;
+			}
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Given a compareValue, attempts to verify its validity by determining what letter note it would be and whether or not it is sharp.
+	 * If it is a rest note, if it is above or below the theoretical min / max, or if it is an invalid compare value (such as a B sharp or F flat),
+	 * then this will return false.
+	 * Strongly based on the code in MusicNote#ctor(compareValue, duration)
+	 * @param compareVal value to check for validity
+	 * @return true if the compareValue is valid, false otherwise
+	 */
+	public static boolean verifyValidNonRestCompareValue(double compareVal) {
+		boolean result = true;
+		boolean isSharp = false;
+		String note;
+		
+		if (compareVal == Constants.REST_COMP_VALUE) {
+			result = false;
+		} else if (compareVal < Constants.MIN_THEORETICAL_COMPARE_VALUE) {
+			result = false;
+		} else if (compareVal > Constants.MAX_THEORETICAL_COMPARE_VALUE) {
+			result = false;
+		} else {
+			// this is a temp variable to help determine what the letter / octave are
+			double tempCompValue = compareVal;
+					
+			// Determine if this is a sharp or not, by seeing if there is a 0.5 modifier.
+			if (tempCompValue % 1 == 0.5) {
+				isSharp = true;
+				tempCompValue -= 0.5;
+			}
+			// End result: a whole-number "temp" compare value.
+			// Next, we'll shave off octaves 1 at a time, until we are left with a note position, which can be used to directly get the note letter.
+			while (tempCompValue > 7) {
+				tempCompValue -= 7;
+			}
+			note = NoteUtils.getNoteForPosition((int)tempCompValue);
+			
+			// Check if we have an impossible note, but since we were trying to build from a compareValue, we can't be sure whether to promote or demote
+			// (we don't know if they were trying to make a C become a flat (a B), or a B become a sharp (a C)
+			if ( (note.equalsIgnoreCase(Constants.NOTE_B) && isSharp) ||
+				 (note.equalsIgnoreCase(Constants.NOTE_E) && isSharp) ) {
+				
+				// Since we are basing this off of a "compare value", we can't tell if it was meant to be a B sharp (and thus, a C), or a C flat (and thus, a B),
+				// since both of those are invalid and would resolve to a compare value of "6.5".
+				result = false;
+			}
+		}
+
+		return result;
+	}
 }
