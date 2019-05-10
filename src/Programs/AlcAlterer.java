@@ -59,12 +59,6 @@ public class AlcAlterer {
 	//    Not sure how valuable this would be yet.
 	//    Alternatively, what if we want to delete a whole octave instead of a time range? Like, the song has a ton of notes in octaev 0 and we don't have fingers for it.
 	//    Alternatively, the reverse of either of these: we want to keep only the parts of the song between starting time x and ending time y, or in range of octave x to octave y.
-	// x. Perhaps one day we might want to be able to target specific compare values and replacements for them? Such as, if we generate an alc file with one key out of range of the piano,
-	//    or if a finger was damaged in some way. Or if the .stats generated for a song has a lot of hits outside of the playable range per PianoProperties.
-	//    We could target compareValue xyz and tell it to replace it with compareValue abc? Or heck, replace it with 0, which will then be cut from the file and we get a new integrity count.
-	// x. "Wiggle" an octave left or right if the note is out of range? That is, if the octave is too low by one, then add an octave to the note. If it is too high, subtract one.
-	//    Then we get into the issue of >what if it is now a duplicate (a note was already at that position), and then we need to subtract 1 from the note counter, unless we wiggle again, but that'd sound way off.
-	
 	// Of course, there may be more cases that come up where we go "oh hey, being able to edit an alc file to add / modify / remove blah would be great", so we could just shove it in here...
 		
 	
@@ -77,6 +71,10 @@ public class AlcAlterer {
 							   "Optionals set 2: \"" + Constants.OCTAVE_OPTION + "\" {integer} {\"true\" or \"false\"} - if the first optional argument is \"" + Constants.OCTAVE_OPTION + "\", and the second is a non-zero integer, the integer will be used to adjust notes up (if positive) or down (if negative) that many octaves within the target alc file. If the 3rd optional argument is \"true\", than any notes pushed below octave 1 or above octave 8 will be DELETED, otherwise they will cap at octave 1 or 8. By default, notes cap at the boundaries.\n" +
 							   "Optionals set 3: \"" + Constants.LOOP_OPTION + "\" {integer} - will loop the song an additional {integer} number of times in the alc file.\n" +
 							   "Optionals set 4: \"" + Constants.SHIFT_OPTION + "\" {integer} - will shift all keys the desired number of compare values up (if positive) or down (if negative) the piano.\n" +
+							   "Optionals set 5: \"" + Constants.REPLACE_OPTION + "\" {double} {double} - will replace all instances of the first compareValue with the second compareValue.\n" +
+							   "Optionals set 6: \"" + Constants.MOVETIME_OPTION + "\" {integer} - will adjust the starting time of every note by the given (positive or negative) integer (in milliseconds).\n" +
+							   "Optionals set 7: \"" + Constants.MINIMIZE_OPTION + "\" - used to set all start times and durations to their smallest possible value by using the song's greatest common divisor, effectively resetting any applied bpm changes.\n" +
+							   "Optionals set 8: \"" + Constants.WIGGLE_OPTION + "\" {double} {double} - given a playable range (a starting compare value and an ending compare value, at least 1 octave in length), any notes that are outside of the range in the sheet will \"wiggle\" to the same note letter / sharpness on the nearest playable octave.\n" +
 		                       "Exiting."); // more options TBD, will need to be added to usage as we implement them
 		} else {
 			String inputAlcPath = args[0];
@@ -119,6 +117,7 @@ public class AlcAlterer {
 							}
 							
 							sheet.setInfoLine(sheet.getInfoLine() + " - AlcAlterer multiplied bpm by " + bpmMult + ".");
+							System.out.println("AlcAlterer#main - multiplied bpm by " + bpmMult + ".");
 						} catch (NumberFormatException e) {
 							System.out.println("AlcAlterer#main - error - Please provide a positive integer value to use as the desired bpm-multiplier. Exiting.");
 						}
@@ -159,6 +158,7 @@ public class AlcAlterer {
 							}
 							
 							sheet.setInfoLine(sheet.getInfoLine() + " - AlcAlterer adjusted octave value by " + octaveAdjustment + ".");
+							System.out.println("AlcAlterer#main - AlcAlterer adjusted octave value by " + octaveAdjustment + ".");
 						} catch (NumberFormatException e) {
 							System.out.println("AlcAlterer#main - error - Please provide a non-zero integer value to use as the desired octave adjustment. Exiting.");
 						}
@@ -193,6 +193,7 @@ public class AlcAlterer {
 							}
 							
 							sheet.setInfoLine(sheet.getInfoLine() + " - AlcAlterer looped the song " + loopCount + " additional times.");
+							System.out.println("AlcAlterer#main - AlcAlterer looped the song " + loopCount + " additional times.");
 						} catch (NumberFormatException e) {
 							System.out.println("AlcAlterer#main - error - Please provide a positive integer value to use as the desired number of loops. Exiting.");
 						}
@@ -220,12 +221,161 @@ public class AlcAlterer {
 								}
 							}
 							
-							sheet.setInfoLine(sheet.getInfoLine() + " - AlcAlterer shifted notes by " + shiftAmount + ". Any notes shifted out of range have been turned into rests.");
+							sheet.setInfoLine(sheet.getInfoLine() + " - AlcAlterer shifted notes by " + shiftAmount + ".");
+							System.out.println("AlcAlterer#main - AlcAlterer shifted notes by " + shiftAmount + ". Any notes shifted out of range have been turned into rests.");
 						} catch (NumberFormatException e) {
 							System.out.println("AlcAlterer#main - error - Please provide a non-zero integer value to use as the desired shift amount. Exiting.");
 						}
 					} else {
 						System.out.println("AlcAlterer#main - error - Please provide a non-zero integer value to use as the desired shift amount. Exiting.");
+						sheet = null;
+					}
+				} else if (args[3].equalsIgnoreCase(Constants.REPLACE_OPTION)) {
+					if (args.length >= 6) {
+						try {
+							int notesAffected = 0;
+							double findCompVal = Double.parseDouble(args[4]); // the "find" compare value in our find-and-replace operation
+							double replaceCompVal = Double.parseDouble(args[5]); // the "replace" compare value in our find-and-replace operation
+							
+							if (!NoteUtils.verifyValidNonRestCompareValue(findCompVal) || !NoteUtils.verifyValidNonRestCompareValue(replaceCompVal)) {
+								System.out.println("AlcAlterer#main - error - Please provide valid compare values to find and replace (An existant note on an octave between 0 and 10, so no B sharp for example). Supplied values: findCompVal: " + findCompVal + ", replaceCompVal: " + replaceCompVal + ".\nExiting.");
+							} else if (findCompVal == replaceCompVal) {
+								System.out.println("AlcAlterer#main - error - Please provide different compare values to find and replace - the \"find\" value and the \"replace\" value are the same. Supplied values: findCompVal: " + findCompVal + ", replaceCompVal: " + replaceCompVal + ".\nExiting.");
+							} else {
+								// we have a valid value - loop through the musicsheet and replace any notes that match the "find" compareValue with the "replace" compareValue.
+								LinkedList<MusicSlice> slices = sheet.getSlices();
+								for (int x = 0; x < slices.size(); ++x) {
+									MusicSlice slice = slices.get(x);
+									Iterator<MusicNote> iter = slice.getNotes().iterator();
+									while (iter.hasNext()) {
+										MusicNote note = iter.next();
+										if (note.getCompareValue() == findCompVal) {
+											slice.getNotes().remove(note);
+											note = new MusicNote(replaceCompVal, note.getDuration());
+											if (!slice.getNotes().add(note)) {
+												System.out.println("AlcAlterer#main - notice - replace operation failed to add duplicate note to timestamp: " + slice.getStartTime() + ". Note details for manual inspection of which note to keep (if different durations): " + note);
+											}
+											++notesAffected;
+											break; // a compareValue can only be present once in a given timeslice - you can't hit a piano key multiple times at the exact point in time
+										}
+									}
+								}
+							}
+							sheet.setInfoLine(sheet.getInfoLine() + " - AlcAlterer replaced " + notesAffected + " notes that were originally compareValue " + findCompVal + " with the new value " + replaceCompVal + ".");
+							System.out.println("AlcAlterer#main - AlcAlterer replaced " + notesAffected + " notes that were originally compareValue " + findCompVal + " with the new value " + replaceCompVal + ".");
+						} catch (NumberFormatException e) {
+							System.out.println("AlcAlterer#main - error - Please provide valid numbers (integer or decimal) to use as the desired compare values to find and to replace. Exiting.");
+						}
+					} else {
+						System.out.println("AlcAlterer#main - error - Please provide a compare value to find, and a compare value to replace with. Exiting.");
+						sheet = null;
+					}
+				} else if (args[3].equalsIgnoreCase(Constants.MOVETIME_OPTION)) {
+					if (args.length >= 5) {
+						try {
+							int adjustAmount = Integer.parseInt(args[4]);
+							if (adjustAmount == 0) {
+								System.out.println("AlcAlterer#main - error - Please provide a non-zero integer value to use as the desired millisecond adjustment to apply to all notes. Exiting.");
+							} else {
+								// we have a valid value - loop through the musicsheet and adjust the start time of every slice (which will thus impact every MusicNote).
+								
+								LinkedList<MusicSlice> slices = sheet.getSlices();
+								for (int x = 0; x < slices.size(); ++x) {
+									MusicSlice slice = slices.get(x);
+									slice.setStartTime(slice.getStartTime() + adjustAmount);
+									
+									if (slice.getStartTime() < 0) {
+										System.out.println("AlcAlterer#main - WARNING - Start Time set to below 0 for slice number: " + x + ", startTime was: " + slice.getStartTime() + ". Will be reset to 0.");
+										slice.setStartTime(0);
+									}
+								}
+							}
+							
+							sheet.setInfoLine(sheet.getInfoLine() + " - AlcAlterer adjusted start times by " + adjustAmount + ".");
+							System.out.println("AlcAlterer#main - AlcAlterer adjusted start times by " + adjustAmount + ".");
+						} catch (NumberFormatException e) {
+							System.out.println("AlcAlterer#main - error - Please provide a non-zero integer value to use as the desired millisecond adjustment. Exiting.");
+						}
+					} else {
+						System.out.println("AlcAlterer#main - error - Please provide a non-zero integer value to use as the desired millisecond adjustment. Exiting.");
+						sheet = null;
+					}
+				} else if (args[3].equalsIgnoreCase(Constants.MINIMIZE_OPTION)) {
+					if (args.length >= 4) {
+						try {
+							// We need to reduce all start times in the MusicSlice's to their smallest possible value.
+							// We also need to reduce the durations of all MusicNotes to their smallest possible value.
+							// Determine the current greatest-common-divisor, which we can divide everything by.
+							int origGcd = sheet.getGCD();
+							LinkedList<MusicSlice> slices = sheet.getSlices();
+							for (int x = 0; x < slices.size(); ++x) {
+								MusicSlice slice = slices.get(x);
+								int currStartTime = slice.getStartTime();
+								slice.setStartTime(currStartTime / origGcd); // since we're dividing by the gcd, it will divide cleanly into an integer
+								
+								// next up, do the notes
+								Iterator<MusicNote> iter = slice.getNotes().iterator();
+								while (iter.hasNext()) {
+									MusicNote note = iter.next();
+									int currDuration = note.getDuration();
+									note.setDuration(currDuration / origGcd);
+								}
+							}
+							
+							int newGcd = sheet.getGCD();
+							if (origGcd == newGcd) {
+								System.out.println("AlcAlterer#main - AlcAlterer could not minimize the sheet - it is already as minimized as it can get.");
+							} else {
+								sheet.setInfoLine(sheet.getInfoLine() + " - AlcAlterer minimized the sheet. Old GCD: " + origGcd + ", New GCD: " + newGcd);
+								System.out.println("AlcAlterer#main - AlcAlterer minimized the sheet. Old GCD: " + origGcd + ", New GCD: " + newGcd);
+							}
+						} catch (Exception e) {
+							System.out.println("AlcAlterer#main - Unexpected exception caught. Exiting.");
+							e.printStackTrace();
+						}
+					} // If adding new options don't copy-paste this particular block (MINIMIZE_OPTION), it doesn't take in a single argument after MINIMIZE.
+				} else if (args[3].equalsIgnoreCase(Constants.WIGGLE_OPTION)) {
+					if (args.length >= 6) {
+						try {
+							int numWiggled = 0;
+							double startCv = Double.parseDouble(args[4]);
+							double endCv = Double.parseDouble(args[5]);
+							
+							if ((endCv - startCv) < Constants.OCTAVE_LENGTH) {
+								System.out.println("AlcAlterer#main - error - Provided range (from the start compare value to the end compare value) is less than 1 octave in length and is too small for wiggling. Exiting.");
+							} else if (startCv < Constants.MIN_THEORETICAL_COMPARE_VALUE) {
+								System.out.println("AlcAlterer#main - error - Provided start range is below the theorical smallest Compare Value (" + Constants.MIN_THEORETICAL_COMPARE_VALUE + "). Exiting.");
+							} else if (endCv > Constants.MAX_THEORETICAL_COMPARE_VALUE) {
+								System.out.println("AlcAlterer#main - error - Provided end range is above the theorical max Compare Value (" + Constants.MAX_THEORETICAL_COMPARE_VALUE + "). Exiting.");
+							} else {
+								// we have a valid range - loop through the musicsheet and wiggle the compare values of any notes outside the range, to be inside the range
+								LinkedList<MusicSlice> slices = sheet.getSlices();
+								for (int x = 0; x < slices.size(); ++x) {
+									MusicSlice slice = slices.get(x);
+									Iterator<MusicNote> iter = slice.getNotes().iterator();
+									while (iter.hasNext()) {
+										MusicNote note = iter.next();
+										if (note.getCompareValue() < startCv || note.getCompareValue() > endCv) {
+											++numWiggled;
+											System.out.println("AlcAlterer#main - Wiggling out-of-range note at time: " + slice.getStartTime() + " - " + note);
+										}
+										while (note.getCompareValue() < startCv) {
+											note.applyOctaveAdjustment(1, true);
+										}
+										while (note.getCompareValue() > endCv) {
+											note.applyOctaveAdjustment(-1, true);
+										}
+									}
+								}
+							}
+							
+							sheet.setInfoLine(sheet.getInfoLine() + " - AlcAlterer wiggled " + numWiggled + " notes to be within the range of: " + startCv + " - " + endCv + ".");
+							System.out.println("AlcAlterer#main - AlcAlterer wiggled " + numWiggled + " notes to be within the range of: " + startCv + " - " + endCv + ".");
+						} catch (NumberFormatException e) {
+							System.out.println("AlcAlterer#main - error - Please provide a valid compare value range (the first playable compare value, and the last playable compare value) to use for wiggling out-of-range notes. Exiting.");
+						}
+					} else {
+						System.out.println("AlcAlterer#main - error - Please provide a compare value range (the first playable compare value, and the last playable compare value) to use for wiggling out-of-range notes. Exiting.");
 						sheet = null;
 					}
 				}

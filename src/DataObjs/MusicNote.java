@@ -321,7 +321,7 @@ public class MusicNote implements Comparable<MusicNote> {
 	 * @param bpmMult positive integer value to multiply the note's duration by
 	 * @return true if successful, false otherwise
 	 */
-	public boolean applyBpmMultipler(int bpmMult) {
+	public boolean applyBpmMultiplier(int bpmMult) {
 		boolean isSuccessful = true;
 		if (bpmMult <= 0) {
 			isSuccessful = false;
@@ -332,12 +332,20 @@ public class MusicNote implements Comparable<MusicNote> {
 	}
 	
 	/**
+	 * Raw duration setter when not using applyBpmMultiplier
+	 * @param newDuration
+	 */
+	public void setDuration(int newDuration) {
+		duration = newDuration;
+	}
+	
+	/**
 	 * Given an octave adjustment (a positive or negative integer), add it to the current octave value.
-	 * If the octave would be pushed below 1 or above 8, then at this moment we will keep it at 1 or 8 rather than deleting the note, unless the delete flag is set.
+	 * If the octave would be pushed below 0 or above 10, then at this moment we will keep it at 0 or 10 rather than deleting the note, unless the delete flag is set.
 	 * If the delete flag is set, then we will turn the note into a rest if it goes past a boundary, effectively deleting it.
 	 * @param octaveAmt non-zero integer value to add to the note's current octave value.
-	 * @param doDeleteNotesPastBoundary if true, if an octave goes below the minimum octave range (1) or above the maximum octave range (8), we'll turn it into a rest to "delete" it.
-	 * @return true if successful, false if it attempted to go below octave 1 or above octave 8, while still keeping it at octave 1 or 8.
+	 * @param doDeleteNotesPastBoundary if true, if an octave goes below the minimum octave range (0) or above the maximum octave range (10), we'll turn it into a rest to "delete" it.
+	 * @return true if successful, false if it attempted to go below octave 0 or above octave 10, while still keeping it at octave 0 or 10.
 	 */
 	public boolean applyOctaveAdjustment(int octaveAmt, boolean doDeleteNotesPastBoundary) {
 		boolean hitBound = false;

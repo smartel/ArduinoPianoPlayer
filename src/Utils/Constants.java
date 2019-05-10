@@ -138,6 +138,10 @@ public class Constants {
 	public static final String OCTAVE_OPTION = "OCTAVE";
 	public static final String LOOP_OPTION = "LOOP";
 	public static final String SHIFT_OPTION = "SHIFT";
+	public static final String REPLACE_OPTION = "REPLACE";
+	public static final String MOVETIME_OPTION = "MOVETIME";
+	public static final String MINIMIZE_OPTION = "MINIMIZE";
+	public static final String WIGGLE_OPTION = "WIGGLE";
 	
 	// FngWriter constants
 	// directions

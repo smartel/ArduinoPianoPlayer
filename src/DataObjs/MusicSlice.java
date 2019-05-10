@@ -93,7 +93,7 @@ public class MusicSlice {
 			Iterator<MusicNote> iter = notes.iterator();
 			while (iter.hasNext()) {
 				MusicNote note = iter.next();
-				isSuccessful = note.applyBpmMultipler(bpmMult);
+				isSuccessful = note.applyBpmMultiplier(bpmMult);
 				if (isSuccessful == false) {
 					break;
 				}

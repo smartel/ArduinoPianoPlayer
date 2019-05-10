@@ -457,28 +457,28 @@ public class MusicNoteTests {
 	@Test
 	public void testBpmPositive() {
 		MusicNote note = new MusicNote("A", 2, 2, false, false);
-		note.applyBpmMultipler(10);
+		note.applyBpmMultiplier(10);
 		assertTrue(note.getDuration() == 20);
 	}
 
 	@Test
 	public void testBpmNegative() {
 		MusicNote note = new MusicNote("A", 2, 2, false, false);
-		note.applyBpmMultipler(-10);
+		note.applyBpmMultiplier(-10);
 		assertTrue(note.getDuration() == 2);
 	}
 
 	@Test
 	public void testBpmZero() {
 		MusicNote note = new MusicNote("A", 2, 2, false, false);
-		note.applyBpmMultipler(0);
+		note.applyBpmMultiplier(0);
 		assertTrue(note.getDuration() == 2);
 	}
 
 	@Test
 	public void testBpmOne() {
 		MusicNote note = new MusicNote("A", 2, 2, false, false);
-		note.applyBpmMultipler(1);
+		note.applyBpmMultiplier(1);
 		assertTrue(note.getDuration() == 2);
 	}
 	
